@@ -14,9 +14,18 @@ const TicketSchema = new mongoose.Schema({
   paymentMethod: {
     type: String
   },
-  numberOfTickets: {
-    type: Number
-  },
+  ticketInfo: [
+    {
+      ticketType: {
+        type: String,
+        required: true,
+      },
+      numberOfTickets: {
+        type: Number,
+        required: true,
+      }
+    }
+  ],
   totalPrice: {
     type: Number
   },
@@ -26,10 +35,8 @@ const TicketSchema = new mongoose.Schema({
   status: {
     type: String
   },
-  image: {
-    type: [
-      String
-    ]
+  paymentId: {
+    type: String
   },
   createdAt: {
     type: Date,

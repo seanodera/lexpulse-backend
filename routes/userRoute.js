@@ -6,7 +6,7 @@ const auth = require('../middleware/authMiddleware');
 
 router
   .route('/')
-  .get(getUsers)
+  // .get(getUsers)
   .post(upload.array("image"), addUser);
 
 router

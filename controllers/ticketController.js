@@ -103,21 +103,6 @@ exports.getUserTickets = async(req, res, next) => {
   // @route POST /api/v1/tickets
   exports.addTicket = async (req, res, next) => {
     try {
-     /*  const result = async(path) => await cloudinary.uploader.upload(path);
-  
-      const imageUrls = [];
-  
-      const files = req.files;
-  
-      if(files && (files.length > 0)) {
-        for (const file of files) {
-          const { path } = file;
-    
-          const newPath = await result(path);
-    
-          imageUrls.push(newPath.secure_url);
-        }
-      } */
 
       const tickets = await Ticket.find({ attendeeId: req.body.attendeeId, eventId: req.body.eventId });
   
@@ -129,20 +114,21 @@ exports.getUserTickets = async(req, res, next) => {
       }
 
       const event = await Event.findById(req.body.eventId);
-      var ticketsLeft = Number(event.ticketsLeft) - Number(req.body.numberOfTickets);
+
+      const totalPrice = req.body.ticketInfo.reduce((acc, ticket) => {
+        const matchingTicket = event.ticketInfo.find(eventTicket => eventTicket.ticketType === ticket.ticketType);
+        return acc + matchingTicket.price * ticket.numberOfTickets;
+      }, 0);
   
       const ticket = await Ticket.create({
         eventId: req.body.eventId,
         attendeeId: req.body.attendeeId,
-        // paymentMethod: req.body.paymentMethod,
-        numberOfTickets: req.body.numberOfTickets,
-        totalPrice: req.body.totalPrice,
-        // amountPaid: req.body.amountPaid,
+        paymentMethod: req.body.paymentMethod,
+        ticketInfo: req.body.ticketInfo,
+        totalPrice: totalPrice,
+        amountPaid: req.body.amountPaid,
         status: req.body.status
-        // image: imageUrls
       });
-
-      const result = await Event.findByIdAndUpdate(req.body.eventId, { ticketsLeft }, { new: true });
   
       return res.status(201).json({
         success: true,

@@ -3,8 +3,6 @@ const Otp = require('../models/otpModel');
 const moment = require('moment');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-// const sgMail = require('@sendgrid/mail');
-// sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 var postmark = require("postmark");
 var client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 
@@ -299,9 +297,9 @@ exports.userResetPassword = async(req, res, next) => {
 // @route POST /api/v1/auth/change-password
 exports.userChangePassword = async(req, res, next) => {
   try {
-    const { email, code, password, confirmPassword } = req.body;
+    const { email, password, confirmPassword } = req.body;
 
-    if(!email || !code || !password || !confirmPassword) {
+    if(!email || !password || !confirmPassword) {
       return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
@@ -309,13 +307,13 @@ exports.userChangePassword = async(req, res, next) => {
       .then(async (user) => {
         if(!user) return res.status(400).json({ msg: 'User does not exist' });
 
-        const otpCode = await Otp.findOne({ userId: user.id });
+        // const otpCode = await Otp.findOne({ userId: user.id });
 
         if(password !== confirmPassword) return res.status(400).json({ msg: 'Passwords do not match' });
 
-        if(moment() > moment(otpCode.expiredAt)) return res.status(400).json({ msg: 'Code expired' });
+        // if(moment() > moment(otpCode.expiredAt)) return res.status(400).json({ msg: 'Code expired' });
 
-        if(otpCode.activateCode !== Number(code)) return res.status(400).json({ msg: 'Invalid code' });
+        // if(otpCode.activateCode !== Number(code)) return res.status(400).json({ msg: 'Invalid code' });
 
         const salt = await bcrypt.genSalt(10);
 
