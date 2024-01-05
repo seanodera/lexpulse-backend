@@ -6,7 +6,20 @@ const cloudinary = require('../middleware/cloudinary');
 // @route GET /api/v1/events
 exports.getEvents = async(req, res, next) => {
     try {
-      const events =  await Event.find({ approved: true, country: req.query.country }).populate({ path: 'eventHostId', select: '_id firstName lastName image' }).exec();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      let query = {
+        approved: true,
+        country: req.query.country,
+        eventDate: { $gte: today },
+      };
+  
+      if (req.query.search) {
+        query.eventName = { $regex: new RegExp(req.query.search, 'i') };
+      }
+
+      const events =  await Event.find(query).populate({ path: 'eventHostId', select: '_id firstName lastName image' }).exec();
   
       return res.status(200).json({
         success: true,
@@ -14,6 +27,7 @@ exports.getEvents = async(req, res, next) => {
       });
   
     } catch (error) {
+      console.log(error)
       return res.status(500).json({
         success: false,
         error: 'Internal Server Error'

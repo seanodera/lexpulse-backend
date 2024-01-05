@@ -27,7 +27,7 @@ exports.checkUser = async(req, res, next) => {
             jwt.sign(
               { id: user.id },
               process.env.JWT_SECRET,
-              { expiresIn: '24h' },
+              { expiresIn: '7d' },
               (err, token) => {
                 if(err) throw err;
 

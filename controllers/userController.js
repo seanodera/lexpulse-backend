@@ -271,7 +271,7 @@ exports.addUser = async(req, res, next) => {
         jwt.sign(
           { id: newUser.id },
           process.env.JWT_SECRET,
-          { expiresIn: '24h' },
+          { expiresIn: '7d' },
           (err, token) => {
             if(err) throw err;
 

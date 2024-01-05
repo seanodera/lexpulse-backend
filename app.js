@@ -15,6 +15,8 @@ const points = require('./routes/pointsRoute');
 const referralCode = require('./routes/referralCodeRoute');
 const following = require('./routes/followingRoute');
 const favorites = require('./routes/favoritesRoute');
+const categories = require('./routes/categoriesRoute');
+const notifications = require('./routes/notificationsRoute');
 const users = require('./routes/userRoute');
 const auth = require('./routes/authRoute');
 
@@ -32,6 +34,8 @@ app.use('/api/v1/points', points);
 app.use('/api/v1/referral-codes', referralCode);
 app.use('/api/v1/following', following);
 app.use('/api/v1/favorites', favorites);
+app.use('/api/v1/categories', categories);
+app.use('/api/v1/notifications', notifications);
 app.use('/api/v1/users', users);
 app.use('/api/v1/auth', auth);
 
