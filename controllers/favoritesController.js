@@ -49,7 +49,7 @@ exports.getFavorite = async(req, res, next) => {
 // @route GET /api/v1/favorites/user/:id
 exports.getUserFavorites = async(req, res, next) => {
   try {
-    const favorites = await Favorites.find({ userId: req.params.id }).populate('eventId').populate({ path: 'eventId', populate: { path: 'eventHostId', select: 'firstName lastName'}}).exec();
+    const favorites = await Favorites.find({ userId: req.params.id }).populate('eventId').populate({ path: 'eventId', populate: { path: 'eventHostId', select: '_id firstName lastName image'}}).exec();
 
     if(!favorites) {
       return res.status(404).json({

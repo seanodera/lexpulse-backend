@@ -22,6 +22,9 @@ const EventSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  subCategory: {
+    type: String
+  },
   currency: {
     type: String,
     required: true,

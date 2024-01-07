@@ -65,9 +65,9 @@ exports.getUser = async(req, res, next) => {
 // @route POST /api/v1/users
 exports.addUser = async(req, res, next) => {
   try {
-    const { firstName, lastName, email, country, password, gender, userType } = req.body;
+    const { firstName, lastName, email, username, country, password, gender, userType } = req.body;
 
-    if(!firstName || !lastName || !email|| !country || !password || !gender || !userType) {
+    if(!firstName || !lastName || !email || !username || !country || !password || !gender || !userType) {
       return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
@@ -100,7 +100,9 @@ exports.addUser = async(req, res, next) => {
     ] }) */
     User.findOne({ email })
       .then(async (user) => {
-        if(user) return res.status(400).json({ msg: 'User already exists' });
+        if(user && user.activatedEmail === false) {
+          return res.status(201).json({ success: true });
+        }
 
         const salt = await bcrypt.genSalt(10);
 
@@ -110,6 +112,7 @@ exports.addUser = async(req, res, next) => {
           firstName,
           lastName,
           email,
+          username,
           country,
           password: hash,
           gender,
@@ -223,7 +226,7 @@ exports.addUser = async(req, res, next) => {
               <td class="container" width="600" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; vertical-align: top; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto;" valign="top">
                 <div class="content" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; max-width: 600px; display: block; margin: 0 auto; padding: 20px;">
                   <table class="main" width="100%" cellpadding="0" cellspacing="0" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; border-radius: 8px; background-color: #FFFFFF; margin: 0; border: 8px solid #FFFFFF; box-shadow: 0 2px 21px 0 rgba(0,112,224,0.12);" bgcolor="#FFFFFF"><tr style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; margin: 0;"><td class="alert alert-warning" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #FFFFFF; font-weight: 500; text-align: center; border-radius: 8px 8px 0 0; background-color: #FFFFFF; margin: 0; padding: 20px;" align="center" bgcolor="#FFFFFF" valign="top">
-                        <img src="https://res.cloudinary.com/dhfif2kjc/image/upload/v1703946360/logo_muinkl.png" alt="Jengaapp" height="40" width="150" align="left" hspace="5%">
+                        <img src="https://res.cloudinary.com/dhfif2kjc/image/upload/v1703946360/logo_muinkl.png" alt="Lexpulse" height="40" width="150" align="left" hspace="5%">
                         <br>
                         <br>
                         <hr width="90%" style="border: solid 0.5px #eaeef6;" >
@@ -231,7 +234,7 @@ exports.addUser = async(req, res, next) => {
                       </td>
                     </tr><tr align="center" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; margin: 0; color:#25265E;"><td class="content-wrap" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; vertical-align: top; margin: 0; padding: 0 20px; color:#25265E;" valign="top">
                         <table width="90%" cellpadding="0" cellspacing="0" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; margin: 0; color:#25265E;"><tr style="font-family: 'Open Sans', Helvetica, Sans-Serif;  box-sizing: border-box; font-size: 16px; margin: 0; color:#25265E;" ><td class="content-block" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; vertical-align: top; margin: 0; padding: 0 0 20px; color:#25265E;" valign="top">
-                              Hello ${user.firstName},
+                              Hello ${newUser.firstName},
                             </td>
                           </tr><tr style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; margin: 0; color:#25265E;"><td class="content-block" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; vertical-align: top; margin: 0; color:#25265E; padding: 0 0 0;" valign="top">
                               Thank you for signing up for Lexpulse.
@@ -268,7 +271,11 @@ exports.addUser = async(req, res, next) => {
           "MessageStream": "outbound"
         });
 
-        jwt.sign(
+        return res.status(201).json({
+          success: true
+        });
+
+        /* jwt.sign(
           { id: newUser.id },
           process.env.JWT_SECRET,
           { expiresIn: '7d' },
@@ -289,7 +296,7 @@ exports.addUser = async(req, res, next) => {
               }
             });
           }
-        );
+        ); */
       });
 
   } catch (error) {

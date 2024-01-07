@@ -86,7 +86,8 @@ exports.addNotifications = async (req, res, next) => {
       userId: req.body.userId,
       title: req.body.title,
       message: req.body.message,
-      notificationType: req.body.notificationType
+      notificationType: req.body.notificationType,
+      read: req.body.read || false
     });
 
     return res.status(201).json({

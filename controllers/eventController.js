@@ -19,11 +19,24 @@ exports.getEvents = async(req, res, next) => {
         query.eventName = { $regex: new RegExp(req.query.search, 'i') };
       }
 
-      const events =  await Event.find(query).populate({ path: 'eventHostId', select: '_id firstName lastName image' }).exec();
+      const pageSize = 10;
+      const page = parseInt(req.query.page) || 1;
+      const skip = (page - 1) * pageSize;
+
+      const events = await Event.find(query)
+        .sort({ eventDate: -1 })
+        .skip(skip)
+        .limit(pageSize)
+        .populate({ path: 'eventHostId', select: '_id firstName lastName image' })
+        .exec();
+
+      const totalEvents = await Event.countDocuments(query);
+      const hasMore = skip + events.length < totalEvents;
   
       return res.status(200).json({
         success: true,
-        data: events
+        data: events,
+        hasMore: hasMore
       });
   
     } catch (error) {

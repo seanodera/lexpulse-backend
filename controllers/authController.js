@@ -20,6 +20,8 @@ exports.checkUser = async(req, res, next) => {
       .then(user => {
         if(!user) return res.status(400).json({ msg: 'User does not exist' });
 
+        if(user.activatedEmail === false) return res.status(400).json({ msg: 'Email not verified' });
+
         bcrypt.compare(password, user.password)
           .then(isMatch => {
             if(!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
@@ -89,12 +91,30 @@ exports.checkUserVerification = async(req, res, next) => {
 
         const userNew = await User.findByIdAndUpdate(user._id, {
           activatedEmail: true
-        });
+        }, { new: true });
 
-        return res.status(200).json({
-          success: true,
-          data: userNew
-        });
+        jwt.sign(
+          { id: user.id },
+          process.env.JWT_SECRET,
+          { expiresIn: '7d' },
+          (err, token) => {
+            if(err) throw err;
+
+            res.json({
+              token,
+              user: {
+                id: userNew.id,
+                firstName: userNew.firstName,
+                lastName: userNew.lastName,
+                email: userNew.email,
+                country: userNew.country,
+                gender: userNew.gender,
+                userType: userNew.userType,
+                image: userNew.image
+              }
+            });
+          }
+        );
       });
 
   } catch (error) {
@@ -152,7 +172,7 @@ exports.userResetPassword = async(req, res, next) => {
             email: 'thelexpulseteam@fadorteclimited.com',
             name: 'Lexpulse'
           },
-          subject: 'Reset Password',
+          subject: 'OTP Verification',
           // text: 'and easy to do anywhere, even with Node.js',
           html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
           <html xmlns="http://www.w3.org/1999/xhtml">
@@ -160,7 +180,7 @@ exports.userResetPassword = async(req, res, next) => {
           <meta name="viewport" content="width=device-width" />
           <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
           <link href='https://fonts.googleapis.com/css?family=Open Sans' rel='stylesheet'>
-          <title>Reset Password</title>
+          <title>OTP Verification</title>
           
           
           <style type="text/css">
@@ -223,7 +243,7 @@ exports.userResetPassword = async(req, res, next) => {
               <td class="container" width="600" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; vertical-align: top; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto;" valign="top">
                 <div class="content" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; max-width: 600px; display: block; margin: 0 auto; padding: 20px;">
                   <table class="main" width="100%" cellpadding="0" cellspacing="0" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; border-radius: 8px; background-color: #FFFFFF; margin: 0; border: 8px solid #FFFFFF; box-shadow: 0 2px 21px 0 rgba(0,112,224,0.12);" bgcolor="#FFFFFF"><tr style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 14px; margin: 0;"><td class="alert alert-warning" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #FFFFFF; font-weight: 500; text-align: center; border-radius: 8px 8px 0 0; background-color: #FFFFFF; margin: 0; padding: 20px;" align="center" bgcolor="#FFFFFF" valign="top">
-                        <img src="https://res.cloudinary.com/dhfif2kjc/image/upload/v1703946360/logo_muinkl.png" alt="Jengaapp" height="40" width="150" align="left" hspace="5%">
+                        <img src="https://res.cloudinary.com/dhfif2kjc/image/upload/v1703946360/logo_muinkl.png" alt="Lexpulse" height="40" width="150" align="left" hspace="5%">
                         <br>
                         <br>
                         <hr width="90%" style="border: solid 0.5px #eaeef6;" >
@@ -234,7 +254,7 @@ exports.userResetPassword = async(req, res, next) => {
                               Hello ${[user.firstName]},
                             </td>
                           </tr><tr style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; margin: 0; color:#25265E;"><td class="content-block" style="font-family: 'Open Sans', Helvetica, Sans-Serif; box-sizing: border-box; font-size: 16px; vertical-align: top; margin: 0; color:#25265E; padding: 0 0 0;" valign="top">
-                              You have requested to reset your password. 
+                              Please find your code below. 
                               <br><br> 
                               If you did not perform this request, you can safely ignore this email. Please find your OTP code below. Do not share this code with anyone.
                               <br><br> 
@@ -263,7 +283,7 @@ exports.userResetPassword = async(req, res, next) => {
         const emailSend = client.sendEmail({
           "From": "thelexpulseteam@fadorteclimited.com",
           "To": email,
-          "Subject": "Reset Password",
+          "Subject": "OTP Verification",
           "HtmlBody": msg.html,
           "MessageStream": "outbound"
         });
