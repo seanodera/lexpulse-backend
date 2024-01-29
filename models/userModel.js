@@ -21,6 +21,9 @@ const UserSchema = new mongoose.Schema({
     required: [true, 'Please add a username'],
     unique: true
   },
+  organization: {
+    type: String,
+  },
   gender: {
     type: String
   },
