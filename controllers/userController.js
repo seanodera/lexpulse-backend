@@ -94,12 +94,16 @@ exports.addUser = async(req, res, next) => {
       }
     }
 
-    /* User.findOne({ $or: [
+    User.findOne({ $or: [
       { email },
-      { phone }
-    ] }) */
-    User.findOne({ email })
+      { username }
+    ] })
+    // User.findOne({ email })
       .then(async (user) => {
+        if(user && user.username && user.username === username) {
+          return res.status(400).json({ error: 'Username' });
+        }
+
         if(user && user.activatedEmail === false) {
           return res.status(201).json({ success: true });
         }

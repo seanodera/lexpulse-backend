@@ -55,54 +55,17 @@ exports.getTicket = async(req, res, next) => {
 // @route GET /api/v1/tickets/user/:id/:status
 exports.getUserTickets = async(req, res, next) => {
     try {
-      let tickets;
-
-      if (req.params.status === 'booked') {
-
-        tickets = await Ticket.find({
-          attendeeId: req.params.id,
-          status: 'booked'
-        }).populate('eventId').populate({
-          path: 'eventId',
-          populate: {
-            path: 'eventHostId',
-            select: 'firstName lastName'
-          }
-        }).exec();
-
-        const today = moment().startOf('day');
-        const updatedTickets = [];
-
-        for (const ticket of tickets) {
-          const eventDate = moment(ticket.eventId.eventDate).startOf('day');
-          if (today.isAfter(eventDate)) {
-
-            const updatedTicket = await Ticket.findByIdAndUpdate(ticket._id, {
-              status: 'completed'
-            }, { new: true });
-            updatedTickets.push(updatedTicket);
-          }
+      const today = moment().startOf('day');
+      const tickets = await Ticket.find({
+        attendeeId: req.params.id,
+        status: req.params.status
+      }).populate('eventId').populate({
+        path: 'eventId',
+        populate: {
+          path: 'eventHostId',
+          select: 'firstName lastName'
         }
-
-        tickets = updatedTickets;
-      } else if (req.params.status === 'completed') {
-
-        tickets = await Ticket.find({
-          attendeeId: req.params.id,
-          status: 'completed'
-        }).populate('eventId').populate({
-          path: 'eventId',
-          populate: {
-            path: 'eventHostId',
-            select: 'firstName lastName'
-          }
-        }).exec();
-      } else {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid status provided'
-        });
-      }
+      }).exec();
 
       if (!tickets) {
         return res.status(404).json({
