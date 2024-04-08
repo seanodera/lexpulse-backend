@@ -65,9 +65,9 @@ exports.getUser = async(req, res, next) => {
 // @route POST /api/v1/users
 exports.addUser = async(req, res, next) => {
   try {
-    const { firstName, lastName, email, username, country, password, gender, userType } = req.body;
+    const { firstName, lastName, email, username, country, password, userType } = req.body;
 
-    if(!firstName || !lastName || !email || !username || !country || !password || !gender || !userType) {
+    if(!firstName || !lastName || !email || !username || !country || !password || !userType) {
       return res.status(400).json({ msg: 'Please enter all fields' });
     }
 
@@ -101,7 +101,7 @@ exports.addUser = async(req, res, next) => {
     // User.findOne({ email })
       .then(async (user) => {
         if(user && user.username && user.username === username) {
-          return res.status(400).json({ error: 'Username' });
+          return res.status(400).json({ msg: 'Username already exists' });
         }
 
         if(user && user.activatedEmail === false) {
@@ -119,7 +119,7 @@ exports.addUser = async(req, res, next) => {
           username,
           country,
           password: hash,
-          gender,
+          // gender,
           phone: Number(activateCode),
           activatedEmail: false,
           activatedPhone: false,

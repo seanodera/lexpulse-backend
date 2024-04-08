@@ -12,7 +12,7 @@ router
 router
   .route('/:id')
   .get(auth, getUser)
-  .patch(auth, updateUser)
+  .patch(auth, upload.array("image"), updateUser)
   .delete(auth, deleteUser);
 
 module.exports = router;
