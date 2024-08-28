@@ -1,15 +1,15 @@
-const Categories = require('../models/categoriesModel');
+const Countries = require('../models/countriesModel');
 const cloudinary = require('../middleware/cloudinary');
 
-// @desc Get all categories
-// @route GET /api/v1/categories
-exports.getCategories = async(req, res, next) => {
+// @desc Get all countries
+// @route GET /api/v1/countries
+exports.getCountries = async(req, res, next) => {
     try {
-      const categories =  await Categories.find();
+      const countries =  await Countries.find();
   
       return res.status(200).json({
         success: true,
-        data: categories
+        data: countries
       });
   
     } catch (error) {
@@ -20,22 +20,22 @@ exports.getCategories = async(req, res, next) => {
     }
   };
 
-// @desc Get single category
-// @route GET /api/v1/categories/:id
-exports.getCategory = async(req, res, next) => {
+// @desc Get single countries
+// @route GET /api/v1/countries/:id
+exports.getCountry = async(req, res, next) => {
     try {
-      const category = await Categories.findById(req.params.id);
+      const countries = await Countries.findById(req.params.id);
   
-      if(!category) {
+      if(!countries) {
         return res.status(404).json({
           success: false,
-          error: 'Category not found'
+          error: 'Countries not found'
         });
       }
   
       return res.status(200).json({
         success: true,
-        data: category
+        data: countries
       });
     } catch (error) {
       return res.status(500).json({
@@ -45,17 +45,17 @@ exports.getCategory = async(req, res, next) => {
     }
   }
 
-// @desc Add category
-// @route POST /api/v1/categories
-exports.addCategory = async (req, res, next) => {
+// @desc Add countries
+// @route POST /api/v1/countries
+exports.addCountry = async (req, res, next) => {
   try {
-    const category = await Categories.create({
-      categoryName: req.body.categoryName
+    const countries = await Countries.create({
+        country: req.body.country
     });
 
     return res.status(201).json({
-      success: true,
-      data: category
+        success: true,
+        data: countries
     });
   } catch (error) {
     console.log(error);
@@ -77,12 +77,12 @@ exports.addCategory = async (req, res, next) => {
 }
 
 // @desc Update category
-// @route PATCH /api/v1/categories/:id
-exports.updateCategory = async(req, res) => {
+// @route PATCH /api/v1/countries/:id
+exports.updateCountry = async(req, res) => {
   try {
     const data = req.body;
 
-    const result = await Categories.findByIdAndUpdate(req.params.id, data, { new: true });
+    const result = await Countries.findByIdAndUpdate(req.params.id, data, { new: true });
 
     return res.status(201).json({
       success: true,
@@ -107,20 +107,20 @@ exports.updateCategory = async(req, res) => {
   }
 }
 
-// @desc Delete category
-// @route DELETE /api/v1/categories/:id
-exports.deleteCategory = async(req, res, next) => {
+// @desc Delete countries
+// @route DELETE /api/v1/countries/:id
+exports.deleteCountry = async(req, res, next) => {
   try {
-    const categories = await Categories.findById(req.params.id);
+    const countries = await Countries.findById(req.params.id);
 
-    if(!categories) {
+    if(!countries) {
       return res.status(404).json({
         success: false,
-        error: 'Categories not found'
+        error: 'Countries not found'
       });
     }
 
-    await categories.remove();
+    await countries.remove();
 
     return res.status(200).json({
       success: true,
