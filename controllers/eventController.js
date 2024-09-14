@@ -1,6 +1,10 @@
 const Event = require('../models/eventModel');
 const Ticket = require('../models/ticketModel');
 const cloudinary = require('../middleware/cloudinary');
+const req = require("express/lib/request");
+const res = require("express/lib/response");
+const res = require("express/lib/response");
+const res = require("express/lib/response");
 
 // @desc Get all events
 // @route GET /api/v1/events
@@ -148,7 +152,7 @@ exports.addEvent = async (req, res, next) => {
       dress: req.body.dress, // New field
       venue: venue, // New venue details
 
-      approved: false,
+      approved: true,
     };
 
     const event = await Event.create(_event);
@@ -240,6 +244,35 @@ exports.deleteEvent = async(req, res, next) => {
     return res.status(200).json({
       success: true,
       data: {}
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: 'Internal Server Error'
+    });
+  }
+}
+
+
+
+// @route Post /api/v1/approve/:id
+exports.approveEvent = async(req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        error: 'Event not found'
+      });
+    }
+
+    event.approved = true;
+    await event.save();
+
+    return res.status(200).json({
+      success: true,
+      data: event
     });
   } catch (error) {
     return res.status(500).json({
