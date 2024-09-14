@@ -6,6 +6,13 @@ const EventSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+  poster: {
+    type: String,
+    required: true,
+  },
+  cover: {
+    type: String,
+  },
   eventName: {
     type: String,
     required: true,
@@ -23,7 +30,7 @@ const EventSchema = new mongoose.Schema({
     required: true,
   },
   subCategory: {
-    type: String
+    type: String,
   },
   currency: {
     type: String,
@@ -47,20 +54,68 @@ const EventSchema = new mongoose.Schema({
         type: Number,
         required: true,
       },
-    }
+      sold: {
+        type: Number,
+        default: 0,
+      },
+      saleStart: {
+        type: Date, // Optional sale start date
+      },
+      saleEnd: {
+        type: Date, // Optional sale end date
+      },
+    },
   ],
   eventDate: {
     type: Date,
     required: true,
   },
+  eventEnd: {
+    type: String, // Optional event end time
+  },
+  startSalesDate: {
+    type: Date, // Optional sales start date
+  },
+  endSalesDate: {
+    type: Date, // Optional sales end date
+  },
   image: {
-    type: [
-      String
-    ]
+    type: [String],
   },
   description: {
     type: String,
     required: true,
+  },
+  minAge: {
+    type: Number, // Optional minimum age restriction
+
+  },
+  dress: {
+    type: String, // Optional dress code
+  },
+  venue: {
+    name: {
+      type: String,
+    },
+    street: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    country: {
+      type: String,
+    },
+    district: {
+      type: String,
+    },
+    saved: {
+      type: Boolean,
+      default: false,
+    },
+    id: {
+      type: String,
+    },
   },
   approved: {
     type: Boolean,
@@ -68,8 +123,8 @@ const EventSchema = new mongoose.Schema({
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model('Event', EventSchema);
