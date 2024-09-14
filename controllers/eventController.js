@@ -3,8 +3,7 @@ const Ticket = require('../models/ticketModel');
 const cloudinary = require('../middleware/cloudinary');
 const req = require("express/lib/request");
 const res = require("express/lib/response");
-const res = require("express/lib/response");
-const res = require("express/lib/response");
+
 
 // @desc Get all events
 // @route GET /api/v1/events
