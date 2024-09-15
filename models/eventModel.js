@@ -125,6 +125,18 @@ const EventSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  viewCount: {
+    type: Number,
+    default: 0,
+  },
+  weightedRating: {
+    type: Number,
+    default: 0,
+  },
+  ticketSales: {
+    type: Number,
+    default: 0,
+  }
 });
 
 module.exports = mongoose.model('Event', EventSchema);
