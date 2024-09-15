@@ -1,7 +1,7 @@
 const Event = require("../models/eventModel");
 const Promotion = require("../models/promotionModel");
 
-//@desc Get /api/v1/events/upcoming
+//@route Get /api/v1/events/upcoming
 exports.getUpcomingEvents = async (req, res) => {
     try {
         const today = new Date();
@@ -38,6 +38,7 @@ exports.getUpcomingEvents = async (req, res) => {
     }
 };
 
+//@desc GET api/v1/events/popular
 exports.getPopularEvents = async (req, res) => {
     try {
         const today = new Date();
@@ -66,6 +67,7 @@ exports.getPopularEvents = async (req, res) => {
     }
 };
 
+//@route GET api/v1/events/featured
 exports.getPromotedEvents = async (req, res) => {
     try {
         const today = new Date();
@@ -107,14 +109,16 @@ exports.getPromotedEvents = async (req, res) => {
     }
 };
 
+
+//@route api/v1/events/category/:category
 exports.getCategoryEvents = async (req, res) => {
     try {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         let query = {
             approved: true,
-            country: req.query.country,
-            category: req.query.category,
+            country: req.query.country || '',
+            category: req.params.category,
             eventDate: { $gte: today },
         };
         const pageSize = 10;
