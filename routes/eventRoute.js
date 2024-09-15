@@ -5,6 +5,7 @@ const {
     getEvents, getEvent, getUserEvents, addEvent, updateEvent, deleteEvent
 } = require('../controllers/eventController');
 const auth = require('../middleware/authMiddleware');
+const {getUpcomingEvents, getPopularEvents, getPromotedEvents} = require("../controllers/eventControllerEXT");
 
 router
     .route('/')
@@ -16,8 +17,14 @@ router
     ]), addEvent);
 
 router
+    .route('/upcoming').get(getUpcomingEvents);
+router.route('/popular').get(getPopularEvents);
+router.route('/featured').get(getPromotedEvents);
+
+
+router
     .route('/:id')
-    .get(auth, getEvent)
+    .get(getEvent)
     .patch(auth, upload.array("image"), updateEvent)
     .delete(auth, deleteEvent);
 
