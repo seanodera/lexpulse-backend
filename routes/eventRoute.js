@@ -5,7 +5,7 @@ const {
     getEvents, getEvent, getUserEvents, addEvent, updateEvent, deleteEvent
 } = require('../controllers/eventController');
 const auth = require('../middleware/authMiddleware');
-const {getUpcomingEvents, getPopularEvents, getPromotedEvents, getCategoryEvents} = require("../controllers/eventControllerEXT");
+const {getUpcomingEvents, getPopularEvents, getPromotedEvents, getCategoryEvents, updateViewCounts} = require("../controllers/eventControllerEXT");
 
 
 router
@@ -23,6 +23,7 @@ router.route('/popular').get(getPopularEvents);
 router.route('/featured').get(getPromotedEvents);
 router.route('/category/:category').get(getCategoryEvents);
 
+router.route('/views').post(updateViewCounts)
 
 router
     .route('/:id')

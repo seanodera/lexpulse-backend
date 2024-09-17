@@ -24,6 +24,7 @@ const users = require('./routes/userRoute');
 const auth = require('./routes/authRoute');
 const venues = require('./routes/venueRoute');
 const transactions = require('./routes/transactionRoute');
+const utils = require('./routes/utilsRoute');
 
 const app = express();
 app.use(express.json());
@@ -47,7 +48,7 @@ app.use('/api/v1/users', users);
 app.use('/api/v1/auth', auth);
 app.use('/api/v1/venues', venues);
 app.use('/api/v1/transactions', transactions);
-
+app.use('/api/v1/utils', utils);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold));

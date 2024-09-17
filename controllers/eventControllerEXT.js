@@ -148,7 +148,7 @@ exports.getCategoryEvents = async (req, res) => {
     }
 };
 
-
+//@route api/v1/events/views
 exports.updateViewCounts = async (req, res) => {
     try {
         const events = req.body.events; // Array of event IDs
