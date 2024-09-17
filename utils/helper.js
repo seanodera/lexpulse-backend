@@ -1,6 +1,6 @@
 const Event = require('../models/eventModel');
 
-const calculateWeightedRating = async (eventId) => {
+exports.calculateWeightedRating = async (eventId) => {
     const event = await Event.findById(eventId);
     if (event) {
         const { viewCount, ticketSales, averageRating } = event;
