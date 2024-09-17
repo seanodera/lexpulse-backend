@@ -22,6 +22,8 @@ const notifications = require('./routes/notificationsRoute');
 const stats = require('./routes/statsRoute');
 const users = require('./routes/userRoute');
 const auth = require('./routes/authRoute');
+const venues = require('./routes/venueRoute');
+const transactions = require('./routes/transactionRoute');
 
 const app = express();
 app.use(express.json());
@@ -43,6 +45,8 @@ app.use('/api/v1/notifications', notifications);
 app.use('/api/v1/stats', stats);
 app.use('/api/v1/users', users);
 app.use('/api/v1/auth', auth);
+app.use('/api/v1/venues', venues);
+app.use('/api/v1/transactions', transactions);
 
 const PORT = process.env.PORT || 5000;
 

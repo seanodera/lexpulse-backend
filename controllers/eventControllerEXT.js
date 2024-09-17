@@ -147,3 +147,25 @@ exports.getCategoryEvents = async (req, res) => {
         });
     }
 };
+
+
+exports.updateViewCounts = async (req, res) => {
+    try {
+        const events = req.body.events; // Array of event IDs
+
+        // Validate that events array exists
+        if (!events || !Array.isArray(events)) {
+            return res.status(400).json({ error: 'Invalid data format. Expected an array of events.' });
+        }
+
+        // Loop through the events and increment view counts
+        for (let eventId of events) {
+            await Event.findByIdAndUpdate(eventId, { $inc: { viewCount: 1 } });
+        }
+
+        res.status(200).json({ message: 'View counts updated successfully' });
+    } catch (e) {
+        console.error('Error updating view counts:', e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
