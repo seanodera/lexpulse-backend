@@ -6,6 +6,7 @@ const cloudinary = require('../middleware/cloudinary');
 var postmark = require("postmark");
 var client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 
+
 // @desc Get all tickets
 // @route GET /api/v1/tickets
 exports.getTickets = async(req, res, next) => {
@@ -25,6 +26,7 @@ exports.getTickets = async(req, res, next) => {
       });
     }
   };
+
 
 // @desc Get single ticket
 // @route GET /api/v1/tickets/:id

@@ -2,7 +2,7 @@ const axios = require("axios");
 const Ticket = require("../models/ticketModel");
 const Transaction = require("../models/transactionModel");
 const Event = require("../models/eventModel");
-const { calculateWeightedRating, convertCurrency} = require("../utils/helper");
+const {calculateWeightedRating, convertCurrency} = require("../utils/helper");
 const moment = require("moment/moment");
 const User = require("../models/userModel");
 var postmark = require("postmark");
@@ -11,7 +11,7 @@ var client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 //@route /api/v1/transactions/initiate
 exports.initiateHold = async (req, res) => {
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
-    const { email, amount, eventId, callback_url } = req.body;
+    const {email, amount, eventId, callback_url} = req.body;
     try {
         // Create a hold on the tickets
         const holdTicket = await Ticket.create({
@@ -71,8 +71,8 @@ exports.initiateHold = async (req, res) => {
                 });
 
                 if (verifyResponse.data.data.status !== 'success') {
-                    await Ticket.deleteOne({ _id: holdTicket._id });
-                    await Transaction.updateOne({ reference }, { status: 'FAILED' });
+                    await Ticket.deleteOne({_id: holdTicket._id});
+                    await Transaction.updateOne({reference}, {status: 'FAILED'});
                 }
             } catch (error) {
                 console.error(`Error verifying transaction for hold ticket ID ${reference}: `, error.message);
@@ -97,7 +97,6 @@ exports.completeTransaction = async (req, res) => {
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
     try {
         const reference = req.params.reference;
-
         const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
             headers: {
                 Authorization: `Bearer ${secretKey}`,
@@ -105,18 +104,23 @@ exports.completeTransaction = async (req, res) => {
         });
 
         if (response.data.data.status === 'success') {
-            const ticket = await Ticket.findOneAndUpdate(
-                { _id: reference },
-                { status: 'CONFIRMED', amountPaid: response.data.data.amount / 100 },
-                { new: true }
-            );
-
+            const ticket = await Ticket.findById(reference).exec();
             if (!ticket) {
                 return res.status(404).json({
                     success: false,
                     error: 'Ticket not found'
                 });
             }
+
+            if (ticket.status === 'booked') {
+                return res.status(200).json({
+                    success: true,
+                    data: ticket
+                });
+            }
+
+            ticket.status = 'booked';
+            ticket.amountPaid = response.data.data.amount / 100;
 
             // Update event ticket sales count and calculate weighted average
             const event = await Event.findById(ticket.eventId);
@@ -130,9 +134,9 @@ exports.completeTransaction = async (req, res) => {
             event.ticketSales += ticket.ticketInfo.reduce((total, item) => total + item.numberOfTickets, 0);
             await event.save();
             await calculateWeightedRating(ticket.eventId);
+            await Transaction.updateOne({reference}, {status: 'SUCCESS'});
 
-            await Transaction.updateOne({ reference }, { status: 'SUCCESS' });
-            const user = await User.findOne({ _id: ticket.attendeeId }).exec();
+            const user = await User.findOne({_id: ticket.attendeeId}).exec();
             const {totalPrice, amountPaid} = ticket;
             const msg = {
                 to: user.email, // Change to your recipient
@@ -255,8 +259,6 @@ exports.completeTransaction = async (req, res) => {
         </html>`,
             };
 
-            // const emailSend = await sgMail.send(msg);
-
             const emailSend = client.sendEmail({
                 "From": "thelexpulseteam@fadorteclimited.com",
                 "To": user.email,
@@ -265,21 +267,21 @@ exports.completeTransaction = async (req, res) => {
                 "MessageStream": "outbound"
             });
 
-
-            res.status(200).json({
+            return res.status(200).json({
                 success: true,
                 data: ticket
             });
         } else {
-            res.status(400).json({
+            return res.status(400).json({
                 success: false,
-                error: 'Transaction verification failed'
+                error: 'Transaction not successful'
             });
         }
     } catch (error) {
-        res.status(500).json({
+        console.error(error);
+        return res.status(500).json({
             success: false,
-            error: error.message
+            error: 'Internal Server Error'
         });
     }
 };
