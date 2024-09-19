@@ -6,6 +6,7 @@ const {calculateWeightedRating, convertCurrency} = require("../utils/helper");
 const moment = require("moment/moment");
 const User = require("../models/userModel");
 var postmark = require("postmark");
+const {Types} = require("mongoose");
 var client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 
 //@route /api/v1/transactions/initiate
@@ -26,8 +27,7 @@ exports.initiateHold = async (req, res) => {
 
         if (!event) {
             return res.status(404).json({
-                success: false,
-                error: 'Event not found'
+                success: false, error: 'Event not found'
             });
         }
 
@@ -37,28 +37,17 @@ exports.initiateHold = async (req, res) => {
         const reference = holdTicket._id.toString();
 
         // Paystack transaction initialization
-        const response = await axios.post(
-            'https://api.paystack.co/transaction/initialize',
-            {
-                email,
-                amount: (finalAmount * 100).toFixed(0),
-                reference,
-                callback_url,
+        const response = await axios.post('https://api.paystack.co/transaction/initialize', {
+            email, amount: (finalAmount * 100).toFixed(0), reference, callback_url,
+        }, {
+            headers: {
+                Authorization: `Bearer ${secretKey}`
             },
-            {
-                headers: {
-                    Authorization: `Bearer ${secretKey}`
-                },
-            }
-        );
+        });
 
         // Save the transaction details with a status of PENDING
         await Transaction.create({
-            reference,
-            status: 'PENDING',
-            eventId,
-            attendeeId: req.body.attendeeId,
-            amount
+            reference, status: 'PENDING', eventId, attendeeId: req.body.attendeeId, hostId: event.eventHostId, amount
         });
 
         // Set timeout to verify transaction after 10 minutes
@@ -80,19 +69,16 @@ exports.initiateHold = async (req, res) => {
         }, 10 * 60 * 1000); // 10 minutes
 
         res.status(200).json({
-            success: true,
-            reference,
-            data: response.data
+            success: true, reference, data: response.data
         });
     } catch (error) {
         res.status(500).json({
-            success: false,
-            error: error.message
+            success: false, error: error.message
         });
     }
 };
 
-//@route /api/v1/complete/:reference
+//@route /api/v1/transactions/complete/:reference
 exports.completeTransaction = async (req, res) => {
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
     try {
@@ -107,31 +93,36 @@ exports.completeTransaction = async (req, res) => {
             const ticket = await Ticket.findById(reference).exec();
             if (!ticket) {
                 return res.status(404).json({
-                    success: false,
-                    error: 'Ticket not found'
+                    success: false, error: 'Ticket not found'
                 });
             }
 
             if (ticket.status === 'booked') {
                 return res.status(200).json({
-                    success: true,
-                    data: ticket
+                    success: true, data: ticket
                 });
             }
 
             ticket.status = 'booked';
             ticket.amountPaid = response.data.data.amount / 100;
-
+            await ticket.save();
             // Update event ticket sales count and calculate weighted average
             const event = await Event.findById(ticket.eventId);
             if (!event) {
                 return res.status(404).json({
-                    success: false,
-                    error: 'Event not found'
+                    success: false, error: 'Event not found'
                 });
             }
 
             event.ticketSales += ticket.ticketInfo.reduce((total, item) => total + item.numberOfTickets, 0);
+            event.ticketInfo = event.ticketInfo.map(eventTicket => {
+                const purchasedTickets = ticket.ticketInfo.find(ticketItem => ticketItem.ticketType === eventTicket.ticketType);
+                if (purchasedTickets) {
+                    eventTicket.sold += purchasedTickets.numberOfTickets;
+                    eventTicket.ticketsLeft -= purchasedTickets.numberOfTickets;
+                }
+                return eventTicket;
+            });
             await event.save();
             await calculateWeightedRating(ticket.eventId);
             await Transaction.updateOne({reference}, {status: 'SUCCESS'});
@@ -141,11 +132,8 @@ exports.completeTransaction = async (req, res) => {
             const msg = {
                 to: user.email, // Change to your recipient
                 from: {
-                    email: 'thelexpulseteam@fadorteclimited.com',
-                    name: 'Lexpulse'
-                },
-                subject: 'Ticket Booking Successful',
-                // text: 'and easy to do anywhere, even with Node.js',
+                    email: 'thelexpulseteam@fadorteclimited.com', name: 'Lexpulse'
+                }, subject: 'Ticket Booking Successful', // text: 'and easy to do anywhere, even with Node.js',
                 html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
         <html xmlns="http://www.w3.org/1999/xhtml">
         <head>
@@ -268,20 +256,82 @@ exports.completeTransaction = async (req, res) => {
             });
 
             return res.status(200).json({
-                success: true,
-                data: ticket
+                success: true, data: ticket
             });
         } else {
             return res.status(400).json({
-                success: false,
-                error: 'Transaction not successful'
+                success: false, error: 'Transaction not successful'
             });
         }
     } catch (error) {
         console.error(error);
         return res.status(500).json({
-            success: false,
-            error: 'Internal Server Error'
+            success: false, error: 'Internal Server Error'
         });
+    }
+};
+
+//@route /api/v1/transactions/event/:eventId
+exports.getEventTransactions = async (req, res, next) => {
+    try {
+        const eventTransactions = await Transaction.find({eventId: req.params.eventId});
+        res.status(200).json({success: true, data: eventTransactions});
+    } catch (error) {
+        res.status(500).json({error: error.message});
+    }
+}
+
+
+//@Route api/v1/transactions/host/:id
+exports.getHostTransactions = async (req, res, next) => {
+    try {
+        const hostId = Types.ObjectId(req.params.id);
+        const hostTransactions = await Transaction.aggregate([{
+            $match: {
+                hostId: hostId,
+                status: 'SUCCESS'
+            }
+        }, {$sort: {createdAt: -1}},
+            {$limit: 25},
+
+
+            {
+                $lookup: {
+                    from: 'User', localField: 'attendeeId', foreignField: '_id', as: 'user'
+                },
+
+            },
+
+
+            {
+                $setWindowFields: {
+                    sortBy: {createdAt: 1}, output: {
+                        cumulativeRevenue: {
+                            $sum: "$amount", window: {
+                                documents: ["unbounded", "current"]
+                            }
+                        }
+                    }
+                }
+            },
+
+
+            {
+                $project: {
+                    transaction: "$$ROOT", cumulativeRevenue: 1, user: {$arrayElemAt: ["$user", 0]},
+
+                }
+            }, {
+                $replaceRoot: {
+                    newRoot: {
+                        $mergeObjects: ["$transaction", {cumulativeRevenue: "$cumulativeRevenue"}, {user: "$user"}]
+                    }
+                }
+            }]);
+        console.log(hostTransactions);
+        res.status(200).json({success: true, data: hostTransactions});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({error: error.message});
     }
 };

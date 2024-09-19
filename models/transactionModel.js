@@ -11,6 +11,11 @@ const TransactionSchema = new mongoose.Schema({
     ref: 'Event',
     required: true,
   },
+  hostId:{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
   attendeeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

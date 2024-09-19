@@ -302,6 +302,8 @@ exports.getUserTickets = async(req, res, next) => {
     }
   }
 
+
+
 // @desc Update single ticket
 // @route PATCH /api/v1/tickets/:id
   exports.updateTicket = async(req,res) => {

@@ -117,6 +117,10 @@ const EventSchema = new mongoose.Schema({
       type: String,
     },
   },
+  lastEntry: {
+    type: String,
+    default: 'Anytime',
+  },
   approved: {
     type: Boolean,
     required: true,
