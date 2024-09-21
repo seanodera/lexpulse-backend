@@ -140,6 +140,11 @@ const EventSchema = new mongoose.Schema({
   ticketSales: {
     type: Number,
     default: 0,
+  },
+  scanners: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Scanner',
+    default: []
   }
 });
 
