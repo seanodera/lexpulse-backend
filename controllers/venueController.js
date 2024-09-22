@@ -1,27 +1,47 @@
 const Venue = require('../models/venueModel');
+const cloudinary = require("../middleware/cloudinary");
 
 
 // Add a new venue
 exports.addVenue = async (req, res) => {
-    const { name, street, city, district, country, links, cover, capacity, type, description, phone, email } = req.body;
+    const { name, street, city, district, country, links, capacity, type, description, phone, email,userId } = req.body;
     try {
+
+        const result = async (path) => await cloudinary.uploader.upload(path);
+
+
+        const files = req.files;
+
+        const poster = await result(files['poster'][0].path);
+        const imageUrls = [poster.secure_url];
+
+        if (files['images'] && files['images'].length > 0) {
+            const imageUploadPromises = files['images'].map(file => result(file.path));
+            const uploadedImages = await Promise.all(imageUploadPromises);
+            uploadedImages.forEach(upload => imageUrls.push(upload.secure_url));
+        }
+
         const newVenue = new Venue({
             name,
             street,
             city,
             district,
-            country,
+            poster: poster.secure_url,
+            images: imageUrls,
             links,
-            cover,
+            country,
             capacity,
             type,
             description,
             phone,
-            email
+            email,
+            userId
         });
+
         const savedVenue = await newVenue.save();
         res.status(201).json({success: true,data: savedVenue});
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: 'Failed to add venue' });
     }
 };
@@ -33,6 +53,9 @@ exports.searchVenues = async (req, res) => {
         const venues = await Venue.find({
             $or: [
                 { name: { $regex: term, $options: 'i' } },
+                {street: { $regex: term, $options: 'i' } },
+                {district: { $regex: term, $options: 'i' } },
+                {type: { $regex: term, $options: 'i' } },
                 { city: { $regex: term, $options: 'i' } },
                 { country: { $regex: term, $options: 'i' } }
             ]
@@ -73,7 +96,7 @@ exports.getVenue = async (req, res) => {
 };
 
 exports.getUserVenue = async (req, res) => {
-    const userId = req.params.userId;
+    const userId = req.params.id;
     try {
         const venues = await Venue.find({ userId: userId });
         res.status(200).json({ success: true, data: venues });

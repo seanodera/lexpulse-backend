@@ -328,7 +328,6 @@ exports.getHostTransactions = async (req, res, next) => {
                     }
                 }
             }]);
-        console.log(hostTransactions);
         res.status(200).json({success: true, data: hostTransactions});
     } catch (error) {
         console.log(error);
