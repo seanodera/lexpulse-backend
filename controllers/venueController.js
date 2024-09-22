@@ -1,5 +1,6 @@
 const Venue = require('../models/venueModel');
 
+
 // Add a new venue
 exports.addVenue = async (req, res) => {
     const { name, street, city, district, country, links, cover, capacity, type, description, phone, email } = req.body;
@@ -70,6 +71,16 @@ exports.getVenue = async (req, res) => {
         res.status(500).json({ error: 'Failed to get venue' });
     }
 };
+
+exports.getUserVenue = async (req, res) => {
+    const userId = req.params.userId;
+    try {
+        const venues = await Venue.find({ userId: userId });
+        res.status(200).json({ success: true, data: venues });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to get user venues' });
+    }
+}
 
 // Delete a venue by id
 exports.deleteVenue = async (req, res) => {
