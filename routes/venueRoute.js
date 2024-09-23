@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const {
-    addVenue, searchVenues, updateVenue, getVenue, deleteVenue, getUserVenue
+    addVenue, searchVenues, updateVenue, getVenue, deleteVenue, getUserVenue, getVenueEvents
 } = require('../controllers/venueController');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/multer');
+const {getEvent} = require("../controllers/eventController");
 
 router
     .route('/')
@@ -15,12 +16,13 @@ router
 
 router
     .route('/search')
-    .get(auth, searchVenues);
+    .get(searchVenues);
 
 router.route('/user/:id').get(auth,getUserVenue);
+router.route('/:id/events').get(getVenueEvents);
 router
     .route('/:id')
-    .get(auth, getVenue)
+    .get(getVenue)
     .put(auth, updateVenue)
     .delete(auth, deleteVenue);
 

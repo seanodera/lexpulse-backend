@@ -1,4 +1,5 @@
 const Venue = require('../models/venueModel');
+const Event = require("../models/eventModel");
 const cloudinary = require("../middleware/cloudinary");
 
 
@@ -102,6 +103,23 @@ exports.getUserVenue = async (req, res) => {
         res.status(200).json({ success: true, data: venues });
     } catch (error) {
         res.status(500).json({ error: 'Failed to get user venues' });
+    }
+}
+
+exports.getVenueEvents = async (req, res) => {
+    const venueId = req.params.id;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    try {
+        const events = await Event.find({
+            'venue.saved': true,
+            'venue.id': venueId,
+            eventDate: { $gte: today },
+        });
+        return res.status(200).json({ success: true, data: events });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Server Error' });
     }
 }
 
