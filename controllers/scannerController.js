@@ -4,6 +4,7 @@ const Event = require('../models/eventModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+
 // @desc Create a new scanner without password
 // @route POST /api/v1/scanners/create
 exports.createScanner = async (req, res, next) => {
@@ -41,6 +42,36 @@ exports.createScanner = async (req, res, next) => {
         });
     }
 };
+
+// @desc Scanner view ticket
+// @route POST /api/v1/scanners/view
+exports.viewTicket = async(req, res, next) => {
+    try {
+        const {  id } = req.params;
+
+        const ticket = await Ticket.findById(id).populate(
+            {path: 'attendeeId',
+            select: '_id firstName lastName',},
+        );
+
+        if (!ticket) {
+            return res.status(404).json({
+                success: false,
+                error: 'Ticket not found'
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: ticket
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'Internal Server Error'
+        });
+    }
+}
 
 // @desc Activate scanner account
 // @route POST /api/v1/scanners/activate
@@ -175,7 +206,7 @@ exports.scanTicket = async (req, res, next) => {
         return res.status(200).json({
             success: true,
             message: 'Ticket scanned successfully',
-            ticket
+            data: ticket
         });
     } catch (error) {
         return res.status(500).json({
