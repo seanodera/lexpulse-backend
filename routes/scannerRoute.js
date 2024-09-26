@@ -9,7 +9,7 @@ router
     .route('/create')
     .post(auth,createScanner)
 
-router.route('/view/:id').get(viewTicket)
+router.route('/view/:id').get(scannerAuth,viewTicket)
 router.route('/invite/:id').post(auth, sendInvitation).get(processInvite)
 router
     .route('/activate')

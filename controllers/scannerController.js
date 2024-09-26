@@ -79,16 +79,28 @@ exports.viewTicket = async(req, res, next) => {
     try {
         const {  id } = req.params;
 
+        const scanner = req.scanner
+
+
+
         const ticket = await Ticket.findById(id).populate(
             {path: 'attendeeId',
             select: '_id firstName lastName',},
         );
+
 
         if (!ticket) {
             return res.status(404).json({
                 success: false,
                 error: 'Ticket not found'
             });
+        }
+
+        if (ticket.eventId.toString() !== scanner.eventId.toString()){
+            return res.status(403).json({
+                success: false,
+                error: 'Scanner not valid for this event'
+            })
         }
 
         return res.status(200).json({
@@ -249,7 +261,7 @@ exports.scanTicket = async (req, res, next) => {
             });
         }
 
-        if (ticket.eventId !== scanner.eventId){
+        if (ticket.eventId.toString() !== scanner.eventId.toString()){
             return res.status(403).json({
                 success: false,
                 error: 'Scanner not valid for this event'
