@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { createScanner, activateScanner, loginScanner, scanTicket, deleteScanner, viewTicket} = require('../controllers/scannerController');
+const { createScanner, activateScanner, loginScanner, scanTicket, deleteScanner, viewTicket, sendInvitation,
+    processInvite
+} = require('../controllers/scannerController');
 const auth = require('../middleware/authMiddleware');
 const scannerAuth = require('../middleware/scannerAuth');
 router
@@ -8,7 +10,7 @@ router
     .post(auth,createScanner)
 
 router.route('/view/:id').get(viewTicket)
-
+router.route('/invite/:id').post(auth, sendInvitation).get(processInvite)
 router
     .route('/activate')
     .post(activateScanner);

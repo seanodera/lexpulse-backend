@@ -53,7 +53,7 @@ exports.getEvents = async (req, res, next) => {
 // @route GET /api/v1/events/:id
 exports.getEvent = async (req, res, next) => {
   try {
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.id).populate('scanners');
     const ticket = await Ticket.countDocuments({ eventId: req.params.id });
 
     if (!event) {
@@ -83,7 +83,7 @@ exports.getEvent = async (req, res, next) => {
 // @route GET /api/v1/events/user/:id
 exports.getUserEvents = async (req, res, next) => {
   try {
-    const events = await Event.find({ eventHostId: req.params.id });
+    const events = await Event.find({ eventHostId: req.params.id }).populate({path: 'scanners'});
 
     if (!events) {
       return res.status(404).json({

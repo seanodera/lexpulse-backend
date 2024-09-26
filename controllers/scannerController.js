@@ -3,6 +3,9 @@ const Ticket = require('../models/ticketModel');
 const Event = require('../models/eventModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+var postmark = require("postmark");
+const {scannerInvite} = require("../templates/scannerInvite");
+var client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 
 
 // @desc Create a new scanner without password
@@ -43,8 +46,35 @@ exports.createScanner = async (req, res, next) => {
     }
 };
 
+// @desc invite Scanner
+// @route POST /api/v1/scanners/invite/:id
+exports.sendInvitation = async (req, res, next) => {
+    try {
+        const {  id } = req.params;
+        const scanner = await Scanner.findById(id).exec();
+        const event = await Event.findById(scanner.eventId).exec()
+        const actionCode = jwt.sign({scanner}, process.env.JWT_SECRET,{expiresIn: '24h'});
+        const message = scannerInvite(scanner,event,`https://lexpulse-scanner.vercel.app/register?oob=${actionCode}`)
+        const emailSend = await client.sendEmail(
+            {
+                "From": "thelexpulseteam@fadorteclimited.com",
+                "To": scanner.email,
+                "Subject": "Scanner Invite",
+                "HtmlBody": message,
+                "MessageStream": "outbound"
+            }
+        )
+        res.status(200).json({
+            success: true,
+            message: 'Invitation sent successfully'
+        });
+    } catch (e) {
+
+    }
+}
+
 // @desc Scanner view ticket
-// @route POST /api/v1/scanners/view
+// @route POST /api/v1/scanners/view/:id
 exports.viewTicket = async(req, res, next) => {
     try {
         const {  id } = req.params;
@@ -71,6 +101,22 @@ exports.viewTicket = async(req, res, next) => {
             error: 'Internal Server Error'
         });
     }
+}
+
+// @desc Activate scanner account
+// @route get /api/v1/scanners/invite/:id
+exports.processInvite = async(req, res, next) => {
+    const scanner = await jwt.decode(req.params.id, process.env.JWT_SECRET);
+    if (!scanner) {
+        return res.status(404).json({
+            success: false,
+            error: 'Scanner not found'
+        });
+    }
+    return res.status(200).json({
+        success: true,
+        data:scanner
+    });
 }
 
 // @desc Activate scanner account
@@ -130,12 +176,18 @@ exports.loginScanner = async (req, res, next) => {
         }
 
         const scanner = await Scanner.findOne({ email });
-
+        const event = await Event.findById(scanner.eventId)
         if (!scanner) {
             return res.status(404).json({
                 success: false,
                 error: 'Scanner not found'
             });
+        }
+        if (!event) {
+            return res.status(404).json({
+                success: false,
+                error: 'Event not found'
+            })
         }
 
         if (!scanner.password || !scanner.activated) {
@@ -158,7 +210,8 @@ exports.loginScanner = async (req, res, next) => {
 
         return res.status(200).json({
             success: true,
-            token
+            token,
+            user:scanner
         });
 
     } catch (error) {
@@ -174,7 +227,6 @@ exports.loginScanner = async (req, res, next) => {
 exports.scanTicket = async (req, res, next) => {
     try {
         const { ticketId, scannerId } = req.body;
-
         if (!ticketId || !scannerId) {
             return res.status(400).json({ msg: 'Please enter all required fields.' });
         }
