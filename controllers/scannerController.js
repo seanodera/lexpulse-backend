@@ -211,7 +211,8 @@ exports.loginScanner = async (req, res, next) => {
         return res.status(200).json({
             success: true,
             token,
-            user:scanner
+            user:scanner,
+            event: event,
         });
 
     } catch (error) {
@@ -248,7 +249,7 @@ exports.scanTicket = async (req, res, next) => {
             });
         }
 
-        ticket.status = 'Scanned';
+        ticket.scanned = true;
         ticket.scannedBy = scannerId;
         await ticket.save();
 
