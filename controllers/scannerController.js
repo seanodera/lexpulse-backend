@@ -248,6 +248,12 @@ exports.scanTicket = async (req, res, next) => {
                 error: 'Scanner not found'
             });
         }
+        if (ticket.eventId !== scanner.eventId){
+            return res.status(403).json({
+                success: false,
+                error: 'Scanner not valid for this event'
+            })
+        }
 
         ticket.scanned = true;
         ticket.scannedBy = scannerId;
