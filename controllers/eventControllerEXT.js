@@ -169,3 +169,89 @@ exports.updateViewCounts = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+
+// @desc Search events
+// @route GET /api/v1/events/search
+exports.searchEvents = async (req, res, next) => {
+    try {
+        const {
+            term,
+            eventTypes,
+            venueTypes,
+            countries,
+            cities,
+            districts,
+            dressCodes,
+            startDate,
+            endDate,
+            minAge,
+            minPrice,
+            maxPrice
+        } = req.query;
+
+        let searchCriteria = {
+            approved: true,
+        };
+
+        if (term) {
+            searchCriteria.eventName = { $regex: term, $options: 'i' }; // Case-insensitive search
+        }
+
+        if (eventTypes) {
+            searchCriteria.category = { $in: eventTypes.split(',') };
+        }
+
+        if (venueTypes) {
+            searchCriteria['venue.type'] = { $in: venueTypes.split(',') };
+        }
+
+        if (countries) {
+            searchCriteria.country = { $in: countries.split(',') };
+        }
+
+        if (cities) {
+            searchCriteria['venue.city'] = { $in: cities.split(',') };
+        }
+
+        if (districts) {
+            searchCriteria['venue.district'] = { $in: districts.split(',') };
+        }
+
+        if (dressCodes) {
+            searchCriteria.dress = { $in: dressCodes.split(',') };
+        }
+
+        if (startDate || endDate) {
+            searchCriteria.eventDate = {};
+            if (startDate) searchCriteria.eventDate.$gte = new Date(startDate);
+            if (endDate) searchCriteria.eventDate.$lte = new Date(endDate);
+        }
+
+        if (minAge !== undefined) {
+            searchCriteria.minAge = { $gte: parseInt(minAge, 10) };
+        }
+
+        if (minPrice !== undefined || maxPrice !== undefined) {
+            searchCriteria['ticketInfo.price'] = {};
+            if (minPrice !== undefined) searchCriteria['ticketInfo.price'].$gte = parseFloat(minPrice);
+            if (maxPrice !== undefined) searchCriteria['ticketInfo.price'].$lte = parseFloat(maxPrice);
+        }
+
+        const events = await Event.find(searchCriteria)
+            .sort({ eventDate: -1 })
+            .populate({ path: 'eventHostId', select: '_id firstName lastName image' })
+            .exec();
+
+        return res.status(200).json({
+            success: true,
+            data: events,
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            error: 'Internal Server Error',
+        });
+    }
+};
