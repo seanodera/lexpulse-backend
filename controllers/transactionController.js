@@ -126,7 +126,10 @@ exports.completeTransaction = async (req, res) => {
             await event.save();
             await calculateWeightedRating(ticket.eventId);
             await Transaction.updateOne({reference}, {status: 'SUCCESS'});
-
+            const host = await User.findOne({_id: event.eventHostId}).exec()
+            host.prevPendingBalance = host.pendingBalance;
+            host.pendingBalance += ticket.totalPrice;
+            host.save();
             const user = await User.findOne({_id: ticket.attendeeId}).exec();
             const {totalPrice, amountPaid} = ticket;
             const msg = {
@@ -286,48 +289,10 @@ exports.getEventTransactions = async (req, res, next) => {
 exports.getHostTransactions = async (req, res, next) => {
     try {
         const hostId = Types.ObjectId(req.params.id);
-        const hostTransactions = await Transaction.aggregate([{
-            $match: {
-                hostId: hostId,
+        const hostTransactions = await Transaction.find({
+            hostId: hostId,
                 status: 'SUCCESS'
-            }
-        }, {$sort: {createdAt: -1}},
-            {$limit: 25},
-
-
-            {
-                $lookup: {
-                    from: 'User', localField: 'attendeeId', foreignField: '_id', as: 'user'
-                },
-
-            },
-
-
-            {
-                $setWindowFields: {
-                    sortBy: {createdAt: 1}, output: {
-                        cumulativeRevenue: {
-                            $sum: "$amount", window: {
-                                documents: ["unbounded", "current"]
-                            }
-                        }
-                    }
-                }
-            },
-
-
-            {
-                $project: {
-                    transaction: "$$ROOT", cumulativeRevenue: 1, user: {$arrayElemAt: ["$user", 0]},
-
-                }
-            }, {
-                $replaceRoot: {
-                    newRoot: {
-                        $mergeObjects: ["$transaction", {cumulativeRevenue: "$cumulativeRevenue"}, {user: "$user"}]
-                    }
-                }
-            }]);
+        }).populate({path: 'attendeeId'}).populate({path: 'eventId'}).exec()
         res.status(200).json({success: true, data: hostTransactions});
     } catch (error) {
         console.log(error);

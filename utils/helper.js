@@ -1,4 +1,5 @@
 const Event = require('../models/eventModel');
+const User = require('../models/userModel');
 const res = require("express/lib/response");
 const axios = require("axios");
 const {response} = require("express");
@@ -34,3 +35,36 @@ exports.convertCurrency = async (amount, currency) => {
         throw new Error('Error getting exchange rates');
     }
 };
+
+exports.updateBalance = async (userId) => {
+    const events = await Event.find({eventHostId: userId}).exec();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset today's time to 00:00:00
+    const user = await User.findById(userId).exec();
+    for (const event of events) {
+        let endDate;
+        try {
+
+            endDate = new Date(event.eventEnd);
+        } catch (e) {
+
+            const eventDate = new Date(event.eventDate);
+            const [hours, minutes] = event.eventEnd.split(':');
+            eventDate.setUTCHours(hours, minutes, 0, 0); // Set the time part
+            endDate = eventDate;
+        }
+
+        if (isNaN(endDate)) {
+            const eventDate = new Date(event.eventDate); // Event's date part
+            const [hours, minutes] = event.eventEnd.split(':');
+            eventDate.setUTCHours(hours, minutes, 0, 0); // Set the time part again
+            endDate = eventDate; // Assign the complete date-time to endDate
+        }
+
+        if (today > endDate){
+          user.availableBalance += user.pendingBalance;
+          user.pendingBalance = 0;
+        }
+        await user.save()
+    }
+}

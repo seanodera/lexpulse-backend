@@ -4,6 +4,7 @@ const moment = require('moment');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 var postmark = require("postmark");
+const {updateBalance} = require("../utils/helper");
 var client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 
 // @desc Auth user
@@ -15,50 +16,53 @@ exports.checkUser = async (req, res, next) => {
         if (!email || !password) {
             return res.status(400).json({msg: 'Please enter all fields'});
         }
+        const user = await User.findOne({email}).exec()
 
-        User.findOne({email})
-            .then(user => {
-                if (!user) return res.status(400).json({msg: 'User does not exist'});
+        if (!user) return res.status(400).json({msg: 'User does not exist'});
 
-                if (user.activatedEmail === false) return res.status(400).json({msg: 'Email not verified'});
+        if (user.activatedEmail === false) return res.status(400).json({msg: 'Email not verified'});
 
-                bcrypt.compare(password, user.password)
-                    .then(isMatch => {
-                        if (!isMatch) return res.status(400).json({msg: 'Invalid credentials'});
+        const isMatch = await bcrypt.compare(password, user.password);
 
-                        jwt.sign(
-                            {id: user.id},
-                            process.env.JWT_SECRET,
-                            {expiresIn: '365d'},
-                            (err, token) => {
-                                if (err) throw err;
+        if (!isMatch) return res.status(400).json({msg: 'Invalid credentials'});
+        await updateBalance(user.id)
+        jwt.sign(
+            {id: user.id},
+            process.env.JWT_SECRET,
+            {expiresIn: '365d'},
+            (err, token) => {
+                if (err) throw err;
+                const extra = (user.userType === 'host') ? {
+                    pendingBalance: user.pendingBalance || 0,
+                    availableBalance: user.availableBalance || 0,
+                } : {}
+                res.json({
+                    token,
+                    user: {
+                        id: user.id,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        email: user.email,
+                        country: user.country,
+                        gender: user.gender,
+                        userType: user.userType,
+                        image: user.image,
+                        username: user.username,
+                        organization: user.organization,
+                        phone: user.phone,
+                        activatedEmail: user.activatedEmail,
+                        activatedPhone: user.activatedPhone,
+                        accountActive: user.accountActive,
+                        createdAt: user.createdAt,
+                        ...extra
+                    }
+                });
+            }
+        );
 
-                                res.json({
-                                    token,
-                                    user: {
-                                        id: user.id,
-                                        firstName: user.firstName,
-                                        lastName: user.lastName,
-                                        email: user.email,
-                                        country: user.country,
-                                        gender: user.gender,
-                                        userType: user.userType,
-                                        image: user.image,
-                                        username: user.username,
-                                        organization: user.organization,
-                                        phone: user.phone,
-                                        activatedEmail: user.activatedEmail,
-                                        activatedPhone: user.activatedPhone,
-                                        accountActive: user.accountActive,
-                                        createdAt: user.createdAt,
-                                    }
-                                });
-                            }
-                        );
-                    });
-            });
 
     } catch (error) {
+        console.log(error);
         if (error.name === 'ValidationError') {
             const messages = Object.values(error.errors).map(val => val.message);
 
