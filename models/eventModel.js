@@ -117,6 +117,10 @@ const EventSchema = new mongoose.Schema({
       type: String,
     },
   },
+  lastEntry: {
+    type: String,
+    default: 'Anytime',
+  },
   approved: {
     type: Boolean,
     required: true,
@@ -136,6 +140,11 @@ const EventSchema = new mongoose.Schema({
   ticketSales: {
     type: Number,
     default: 0,
+  },
+  scanners: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Scanner',
+    default: []
   }
 });
 

@@ -11,6 +11,11 @@ const PromotionSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    promotionLevel: {
+        type: String,
+        required: true,
+        unique: true,
+    },
     startDate: {type: Date, default: Date.now},
     endDate: {
         type: Date,

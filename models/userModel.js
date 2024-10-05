@@ -64,7 +64,27 @@ const UserSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  currency:{
+    type: String,
+    default: 'GHS',
+  },
+  availableBalance: {
+    type: Number,
+    default: 0,
+  },
+  pendingBalance: {
+    type: Number,
+    default: 0,
+  },
+  prevAvailableBalance: {
+    type: Number,
+    default: 0,
+  },
+  prevPendingBalance: {
+    type: Number,
+    default: 0,
+  },
 });
 
 module.exports = mongoose.model('User', UserSchema);

@@ -1,8 +1,7 @@
 const Event = require('../models/eventModel');
 const Ticket = require('../models/ticketModel');
 const cloudinary = require('../middleware/cloudinary');
-const req = require("express/lib/request");
-const res = require("express/lib/response");
+
 
 
 // @desc Get all events
@@ -54,7 +53,7 @@ exports.getEvents = async (req, res, next) => {
 // @route GET /api/v1/events/:id
 exports.getEvent = async (req, res, next) => {
   try {
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.id).populate('scanners');
     const ticket = await Ticket.countDocuments({ eventId: req.params.id });
 
     if (!event) {
@@ -79,31 +78,41 @@ exports.getEvent = async (req, res, next) => {
   }
 };
 
+
 // @desc Get user events
 // @route GET /api/v1/events/user/:id
-exports.getUserEvents = async(req, res, next) => {
+exports.getUserEvents = async (req, res, next) => {
   try {
-    const events = await Event.find({ eventHostId: req.params.id });
+    const events = await Event.find({ eventHostId: req.params.id }).populate({path: 'scanners'});
 
-    if(!events) {
+    if (!events) {
       return res.status(404).json({
         success: false,
-        error: 'Events not found'
+        error: 'Events not found',
       });
     }
 
+    const eventsWithRevenue = await Promise.all(events.map(async (event) => {
+      const revenueData = await Ticket.aggregate([
+        { $match: { eventId: event._id } },
+        { $group: { _id: null, totalRevenue: { $sum: '$totalPrice' } } }
+      ]);
+
+      const revenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
+      return { ...event.toObject(), revenue };  // Combine event data with calculated revenue
+    }));
     return res.status(200).json({
       success: true,
-      data: events
+      data: eventsWithRevenue
     });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
       success: false,
-      error: 'Internal Server Error'
+      error: 'Internal Server Error',
     });
   }
-}
+};
 
 // @desc Add event
 // @route POST /api/v1/events
@@ -150,7 +159,7 @@ exports.addEvent = async (req, res, next) => {
       minAge: req.body.minAge, // New field
       dress: req.body.dress, // New field
       venue: venue, // New venue details
-
+      lastEntry: req.body.lastEntry,
       approved: true,
     };
 
