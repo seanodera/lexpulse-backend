@@ -78,7 +78,7 @@ exports.initiatePowerPayment = async (email, amount,event,callback_url,reference
     console.log(`Generated UUID: ${generatedUUID}` , amount);
     const response = await axios.post(paymentUrl,{
         "depositId": generatedUUID,
-        "returnUrl": `http://127.0.0.1:3000/complete?reference=${reference}`,
+        "returnUrl": `${callback_url}?reference=${reference}`,
         "amount": `${amount}`,
         "language": "EN",
         "country": iso3CountryName,
