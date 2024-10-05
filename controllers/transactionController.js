@@ -42,7 +42,8 @@ exports.initiateHold = async (req, res) => {
         let authorizationUrl;
         let method;
         let paymentReference;
-        if (event.currency === 'GHS' || req.body.paymentMethod === 'credit_card') {
+        console.log(req.body.paymentMethod )
+        if ( req.body.paymentMethod === 'credit_card' || event.currency === 'GHS' ) {
             const data = await initiatePaystackPayment(email, amount, event, callback_url, reference);
             method = 'Paystack';
             console.log(data)
