@@ -2,11 +2,17 @@ const axios = require("axios");
 const Ticket = require("../models/ticketModel");
 const Transaction = require("../models/transactionModel");
 const Event = require("../models/eventModel");
-const {calculateWeightedRating, convertCurrency} = require("../utils/helper");
+const {
+    calculateWeightedRating,
+    convertCurrency,
+    initiatePaystackPayment,
+    initiatePowerPayment
+} = require("../utils/helper");
 const moment = require("moment/moment");
 const User = require("../models/userModel");
 var postmark = require("postmark");
 const {Types} = require("mongoose");
+const process = require("node:process");
 var client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 
 //@route /api/v1/transactions/initiate
@@ -14,6 +20,14 @@ exports.initiateHold = async (req, res) => {
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
     const {email, amount, eventId, callback_url} = req.body;
     try {
+
+        const event = await Event.findById(eventId).exec();
+
+        if (!event) {
+            return res.status(404).json({
+                success: false, error: 'Event not found'
+            });
+        }
         // Create a hold on the tickets
         const holdTicket = await Ticket.create({
             eventId,
@@ -23,31 +37,35 @@ exports.initiateHold = async (req, res) => {
             totalPrice: amount,
             status: 'HOLD',
         });
-        const event = await Event.findById(eventId).exec();
 
-        if (!event) {
-            return res.status(404).json({
-                success: false, error: 'Event not found'
-            });
-        }
-
-        const finalAmount = await convertCurrency(amount, event.currency)
-
-        console.log(finalAmount);
         const reference = holdTicket._id.toString();
-
-        // Paystack transaction initialization
-        const response = await axios.post('https://api.paystack.co/transaction/initialize', {
-            email, amount: (finalAmount * 100).toFixed(0), reference, callback_url,
-        }, {
-            headers: {
-                Authorization: `Bearer ${secretKey}`
-            },
-        });
+        let authorizationUrl;
+        let method;
+        let paymentReference;
+        if (event.currency === 'GHS') {
+            const data = await initiatePaystackPayment(email, amount, event, callback_url, reference);
+            method = 'Paystack';
+            console.log(data)
+            authorizationUrl = data.data.authorization_url;
+            paymentReference = data.data.reference;
+        } else {
+            const data = await initiatePowerPayment(email, amount, event, callback_url, reference);
+            method = 'Pawapay';
+            console.log(data)
+            authorizationUrl = data.redirectUrl;
+            paymentReference = data.reference;
+        }
 
         // Save the transaction details with a status of PENDING
         await Transaction.create({
-            reference, status: 'PENDING', eventId, attendeeId: req.body.attendeeId, hostId: event.eventHostId, amount
+            reference,
+            status: 'PENDING',
+            eventId,
+            attendeeId: req.body.attendeeId,
+            hostId: event.eventHostId,
+            paymentReference,
+            amount,
+            method
         });
 
         // Set timeout to verify transaction after 10 minutes
@@ -69,9 +87,10 @@ exports.initiateHold = async (req, res) => {
         }, 10 * 60 * 1000); // 10 minutes
 
         res.status(200).json({
-            success: true, reference, data: response.data
+            success: true, reference, data: {authorizationUrl}
         });
     } catch (error) {
+        // console.log(error)
         res.status(500).json({
             success: false, error: error.message
         });
@@ -83,13 +102,46 @@ exports.completeTransaction = async (req, res) => {
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
     try {
         const reference = req.params.reference;
-        const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
-            headers: {
-                Authorization: `Bearer ${secretKey}`,
-            },
-        });
-
-        if (response.data.data.status === 'success') {
+        const transaction = await Transaction.findOne({reference}).exec();
+        console.log(transaction,reference);
+        if (!transaction) {
+            return res.status(404).json({
+                message: 'transaction not found'
+            })
+        }
+        let status = 'PENDING';
+        let amountPaid = 0;
+        if (transaction.method === 'Paystack') {
+            const response = await axios.get(`https://api.paystack.co/transaction/verify/${transaction.paymentReference}`, {
+                headers: {
+                    Authorization: `Bearer ${secretKey}`,
+                },
+            });
+            if (response.data.data.status === 'success'){
+                status = 'COMPLETED';
+                amountPaid = response.data.data.amount / 100
+            } else {
+                status = 'FAILED';
+            }
+        } else {
+            const response = await axios.get(`https://api.sandbox.pawapay.cloud/deposits/${transaction.paymentReference}`,{
+                headers: {
+                    Authorization: `Bearer ${process.env.PAWAPAY_SECRET_KEY}`
+                }
+            })
+            console.log(response)
+            const deposit = response.data[0];
+            if (deposit.status === "ACCEPTED" || deposit.status === "COMPLETED") {
+                status = 'COMPLETED';
+                amountPaid = deposit.depositedAmount;
+            } else if (deposit.status === "SUBMITTED") {
+                status = 'PENDING'
+                amountPaid = deposit.requestedAmount;
+            } else if (deposit.status === "FAILED") {
+                status = 'FAILED'
+            }
+        }
+        if (status === 'COMPLETED') {
             const ticket = await Ticket.findById(reference).exec();
             if (!ticket) {
                 return res.status(404).json({
@@ -104,7 +156,7 @@ exports.completeTransaction = async (req, res) => {
             }
 
             ticket.status = 'booked';
-            ticket.amountPaid = response.data.data.amount / 100;
+            ticket.amountPaid = amountPaid;
             await ticket.save();
             // Update event ticket sales count and calculate weighted average
             const event = await Event.findById(ticket.eventId);
@@ -131,7 +183,7 @@ exports.completeTransaction = async (req, res) => {
             host.pendingBalance += ticket.totalPrice;
             host.save();
             const user = await User.findOne({_id: ticket.attendeeId}).exec();
-            const {totalPrice, amountPaid} = ticket;
+            const {totalPrice} = ticket;
             const msg = {
                 to: user.email, // Change to your recipient
                 from: {
@@ -262,6 +314,7 @@ exports.completeTransaction = async (req, res) => {
                 success: true, data: ticket
             });
         } else {
+
             return res.status(400).json({
                 success: false, error: 'Transaction not successful'
             });
@@ -291,7 +344,7 @@ exports.getHostTransactions = async (req, res, next) => {
         const hostId = Types.ObjectId(req.params.id);
         const hostTransactions = await Transaction.find({
             hostId: hostId,
-                status: 'SUCCESS'
+            status: 'SUCCESS'
         }).populate({path: 'attendeeId'}).populate({path: 'eventId'}).exec()
         res.status(200).json({success: true, data: hostTransactions});
     } catch (error) {

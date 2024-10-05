@@ -1,8 +1,9 @@
 const Event = require('../models/eventModel');
 const User = require('../models/userModel');
-const res = require("express/lib/response");
 const axios = require("axios");
-const {response} = require("express");
+const process = require("node:process");
+const { v4: uuidv4 } = require('uuid');
+const countryData = require('country-data');
 
 exports.calculateWeightedRating = async (eventId) => {
     const event = await Event.findById(eventId);
@@ -16,7 +17,19 @@ exports.calculateWeightedRating = async (eventId) => {
 };
 
 
-exports.convertCurrency = async (amount, currency) => {
+
+// Function to get ISO3 country name from country name
+function getISO3CountryName(countryName) {
+    const country = countryData.countries.all.find(country => country.name.toLowerCase() === countryName.toLowerCase());
+
+    if (country) {
+        return country.alpha3;
+    } else {
+        return `Country with name ${countryName} not found.`;
+    }
+}
+
+const convertCurrency = async (amount, currency) => {
     try {
         if (currency && currency !== 'GHS') {
             const ratesUrl = `https://open.er-api.com/v6/latest/${currency}`;
@@ -35,6 +48,51 @@ exports.convertCurrency = async (amount, currency) => {
         throw new Error('Error getting exchange rates');
     }
 };
+
+exports.convertCurrency = convertCurrency;
+
+
+exports.initiatePaystackPayment = async (email, amount,event,callback_url,reference) => {
+        const finalAmount = await convertCurrency(amount, event.currency)
+        console.log(finalAmount);
+        const paymentUrl = `https://api.paystack.co/transaction/initialize`;
+        const response = await axios.post(paymentUrl, {
+            reference,
+            amount: (finalAmount * 100).toFixed(0),
+            email,
+            callback_url,
+        }, {
+            headers: {
+                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+            }
+        });
+        return response.data;
+}
+
+exports.initiatePowerPayment = async (email, amount,event,callback_url,reference) => {
+    const paymentUrl = `https://api.sandbox.pawapay.cloud/v1/widget/sessions`;
+    const iso3CountryName = getISO3CountryName(event.country);
+
+
+    const generatedUUID = uuidv4();
+    console.log(`Generated UUID: ${generatedUUID}` , amount);
+    const response = await axios.post(paymentUrl,{
+        "depositId": generatedUUID,
+        "returnUrl": `http://127.0.0.1:3000/complete?reference=${reference}`,
+        "amount": `${amount}`,
+        "language": "EN",
+        "country": iso3CountryName,
+        "reason": event.eventName,
+    }, { headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${process.env.PAWAPAY_SECRET_KEY}`
+        }})
+    return {
+        redirectUrl: response.data.redirectUrl,
+        reference: generatedUUID,
+    };
+}
+
 
 exports.updateBalance = async (userId) => {
     const events = await Event.find({eventHostId: userId}).exec();
@@ -61,9 +119,9 @@ exports.updateBalance = async (userId) => {
             endDate = eventDate; // Assign the complete date-time to endDate
         }
 
-        if (today > endDate){
-          user.availableBalance += user.pendingBalance;
-          user.pendingBalance = 0;
+        if (today > endDate) {
+            user.availableBalance += user.pendingBalance;
+            user.pendingBalance = 0;
         }
         await user.save()
     }

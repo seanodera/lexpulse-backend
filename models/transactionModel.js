@@ -25,6 +25,15 @@ const TransactionSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  method: {
+    type: String,
+    enum: ['Paystack','Pawapay'],
+    required: true,
+  },
+  paymentReference: {
+    type: String,
+    required: true,
+  },
   status: {
     type: String,
     enum: ['PENDING', 'SUCCESS', 'FAILED'],

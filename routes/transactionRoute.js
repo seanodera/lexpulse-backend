@@ -7,7 +7,7 @@ const auth = require('../middleware/authMiddleware');
 router.route('/initiate').post(auth, initiateHold);
 
 // Route to complete the transaction
-router.route('/complete/:reference').get(auth, completeTransaction);
+router.route('/complete/:reference').get( completeTransaction);
 router.route('/host/:id').get(auth,getHostTransactions)
 
 module.exports = router;
