@@ -2,6 +2,7 @@ const axios = require("axios");
 const Ticket = require("../models/ticketModel");
 const Transaction = require("../models/transactionModel");
 const Event = require("../models/eventModel");
+const Wallet = require("../models/walletModel");
 const {
     calculateWeightedRating,
     convertCurrency,
@@ -180,8 +181,27 @@ exports.completeTransaction = async (req, res) => {
             await calculateWeightedRating(ticket.eventId);
             await Transaction.updateOne({reference}, {status: 'SUCCESS'});
             const host = await User.findOne({_id: event.eventHostId}).exec()
-            host.prevPendingBalance = host.pendingBalance;
-            host.pendingBalance += ticket.totalPrice;
+
+            const wallets = await Wallet.find({userId:event.eventHostId, currency: event.currency }).exec()
+
+           const wallet = wallets.find((value) => value.currency === event.currency);
+            if (wallet) {
+
+                wallet.pendingPrevBalance = wallet.pendingBalance;
+                wallet.pendingBalance += ticket.totalPrice;
+                wallet.save()
+            } else {
+                const newWallet = await Wallet.create({
+                    userId: event.eventHostId,
+                    pendingBalance: ticket.totalPrice,
+                    balance: 0,
+                    prevBalance: 0,
+                    pendingPrevBalance: 0,
+                    currency: event.currency
+                });
+                host.wallets = [...host.wallets, newWallet._id];
+            }
+
             host.save();
             const user = await User.findOne({_id: ticket.attendeeId}).exec();
             const {totalPrice} = ticket;
@@ -353,3 +373,15 @@ exports.getHostTransactions = async (req, res, next) => {
         res.status(500).json({error: error.message});
     }
 };
+
+//@Route api/v1/transactions/wallets/:id
+exports.getUserWallets = async (req, res, next) => {
+    try {
+        const hostId = Types.ObjectId(req.params.id);
+        const wallets = await Wallet.find({userId:hostId }).exec()
+        res.status(200).json({success: true, data: wallets});
+    } catch (e) {
+        console.log(error);
+        res.status(500).json({error: error.message});
+    }
+}
