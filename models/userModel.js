@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const {Schema} = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
   firstName: {
@@ -69,6 +70,11 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: 'GHS',
   },
+  wallets: [
+    {
+      type: Schema.Types.ObjectId,
+    }
+  ],
   availableBalance: {
     type: Number,
     default: 0,
