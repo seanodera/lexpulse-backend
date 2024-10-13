@@ -24,13 +24,13 @@ exports.checkAdmin = async (req, res, next) => {
 
         if (!admin) return res.status(400).json({ msg: 'Admin does not exist' });
 
+
         if (admin.activatedEmail === false) return res.status(400).json({ msg: 'Email not verified' });
 
         const isMatch = await bcrypt.compare(password, admin.password);
 
-        if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
+        if (!isMatch || admin.userType !== 'administrator') return res.status(400).json({ msg: 'Invalid credentials' });
 
-        await updateBalance(admin.id);
 
         jwt.sign(
             { ...admin, userType: admin.userType, id: admin.id },
@@ -38,10 +38,7 @@ exports.checkAdmin = async (req, res, next) => {
             { expiresIn: '365d' },
             (err, token) => {
                 if (err) throw err;
-                const extra = (admin.userType === 'host') ? {
-                    pendingBalance: admin.pendingBalance || 0,
-                    availableBalance: admin.availableBalance || 0,
-                } : {};
+                c
                 res.json({
                     token,
                     user: {
@@ -58,7 +55,6 @@ exports.checkAdmin = async (req, res, next) => {
                         activatedPhone: admin.activatedPhone,
                         accountActive: admin.accountActive,
                         createdAt: admin.createdAt,
-                        ...extra
                     }
                 });
             }
