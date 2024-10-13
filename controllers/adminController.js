@@ -30,7 +30,7 @@ exports.checkAdmin = async (req, res, next) => {
         const isMatch = await bcrypt.compare(password, admin.password);
 
         if (!isMatch || admin.userType !== 'administrator') return res.status(400).json({ msg: 'Invalid credentials' });
-
+        console.log(admin);
 
         jwt.sign(
             { ...admin, userType: admin.userType, id: admin.id },
@@ -38,8 +38,8 @@ exports.checkAdmin = async (req, res, next) => {
             { expiresIn: '365d' },
             (err, token) => {
                 if (err) throw err;
-                c
-                res.json({
+
+                return res.json({
                     token,
                     user: {
                         id: admin.id,
