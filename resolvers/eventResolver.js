@@ -115,6 +115,7 @@ async function getEventReservations(_, { id }) {
 async function getEvents(_) {
     try {
         const events = await Event.find().exec()
+        console.log(events)
         return events;
     } catch (e) {
 
