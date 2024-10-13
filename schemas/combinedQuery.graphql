@@ -20,6 +20,8 @@ type Query {
     getTodayEvents:[Event]
     upcomingEvents:[Event]
     recentEvents:[Event]
+
+
 }
 
 schema {

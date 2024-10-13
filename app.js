@@ -27,6 +27,7 @@ const transactions = require('./routes/transactionRoute');
 const utils = require('./routes/utilsRoute');
 const scanner = require('./routes/scannerRoute');
 const admin = require('./routes/adminRoute');
+const adminAuth = require('./middleware/adminAuth');
 const {typeDefs, resolvers} = require("./typeDefs");
 function errorLogger(err, req, res, next) {
     console.error(`Error encountered on ${req.path} [${req.method}]:`, err);
@@ -61,7 +62,7 @@ const startServer = async () => {
     app.use('/api/v1/utils', utils);
     app.use('/api/v1/scanners', scanner);
     app.use('/api/v1/admin', admin);
-    app.use('/graphql', expressMiddleware(server),errorLogger);
+    app.use('/graphql',adminAuth, expressMiddleware(server),errorLogger);
 
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold));

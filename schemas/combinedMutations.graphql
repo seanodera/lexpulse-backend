@@ -27,4 +27,5 @@ type Mutation {
     approveEvent(id: ID!): Event
     flagEvent (id: ID!, reason: String): Event
 
+
 }

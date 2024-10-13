@@ -7,6 +7,10 @@ function adminAuth(req, res, next) {
     if (!token) return res.status(401).json({msg: 'No token, authorization denied'});
 
     try {
+        const body = req.body;
+        if (body && body.operationName === "IntrospectionQuery") {
+            return next();
+        }
         const bearer = token.split(' ');
         const bearerToken = bearer[1];
 
