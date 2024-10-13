@@ -3,7 +3,6 @@ type Scanner {
     id: ID!
     eventId: ID!
     email: String!
-    password: String
     activated: Boolean!
     name: String!
     scannedTickets: Int!

@@ -35,7 +35,7 @@ function errorLogger(err, req, res, next) {
 }
 
 const startServer = async () => {
-    const server = new ApolloServer({ typeDefs, resolvers });
+    const server = new ApolloServer({ typeDefs, resolvers,introspection: true,playground: true, });
 
     await server.start(); // Ensure server.start() is awaited
     const app = express();

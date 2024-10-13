@@ -10,7 +10,6 @@ type User {
     gender: String
     phone: String
     country: String!
-    password: String!
     activatedEmail: Boolean
     activatedPhone: Boolean
     userType: String!
