@@ -21,8 +21,8 @@ type Query {
     getTodayEvents:[Event]
     upcomingEvents:[Event]
     recentEvents:[Event]
-    getEventTransactions(id: ID!): [Transaction]
-    getEventReservations(id: ID!): [Ticket]
+    getEventTransactions(id: ID!): [UserIncludedTransaction]
+    getEventReservations(id: ID!): [UserIncludedTicket]
 
 }
 

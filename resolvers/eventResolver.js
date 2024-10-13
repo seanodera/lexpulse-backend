@@ -96,8 +96,14 @@ async function deleteEvent(_, { id }) {
 
 async function getEventTransactions(_, { id }) {
    try {
-       const transactions = await Transaction.find({eventId: id}).exec()
-       return transactions;
+       const transactions = await Transaction.find({eventId: id}).populate('attendeeId').exec();
+
+       console.log(transactions);
+       return transactions.map(transaction => ({
+           ...transaction.toJSON(),
+           attendeeId: transaction.attendeeId._id,
+           user: transaction.attendeeId
+       }));
    } catch (e) {
        
    }
@@ -105,8 +111,14 @@ async function getEventTransactions(_, { id }) {
 
 async function getEventReservations(_, { id }) {
     try {
-        const tickets = await Ticket.find({eventId: id}).exec()
-        return tickets;
+        const tickets = await Ticket.find({eventId: id}).populate('attendeeId').exec()
+
+        console.log(tickets)
+        return tickets.map(ticket => ({
+            ...ticket.toJSON(),
+            attendeeId: ticket.attendeeId._id,
+            user: ticket.attendeeId
+        }));
     } catch (e) {
 
     }
@@ -115,7 +127,7 @@ async function getEventReservations(_, { id }) {
 async function getEvents(_) {
     try {
         const events = await Event.find().exec()
-        console.log(events)
+
         return events;
     } catch (e) {
 
@@ -137,9 +149,18 @@ module.exports = {
     },
     Transaction: {
         id: (parent) => parent._id.toString(),
+        updatedAt: (parent) => new Date(parent.updatedAt).toISOString(),
     },
     TicketInfo: {
 
+    },
+    UserIncludedTicket: {
+        id: (parent) => parent._id.toString(),
+        createdAt: (parent) => new Date(parent.createdAt).toISOString(),
+    },
+    UserIncludedTransaction: {
+        id: (parent) => parent._id.toString(),
+        updatedAt: (parent) => new Date(parent.updatedAt).toISOString(),
     },
     Query: {
         getHostEvents,

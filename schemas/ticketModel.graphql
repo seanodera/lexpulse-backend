@@ -1,8 +1,8 @@
 #file:ticketModel.graphql
 
 type PurchasedTicketInfo {
-    ticketType: String!
-    numberOfTickets: Int!
+    ticketType: String
+    numberOfTickets: Int
 }
 input PurchasedTicketInfoInput {
     ticketType: String!
@@ -10,20 +10,33 @@ input PurchasedTicketInfoInput {
 }
 
 type Ticket {
-    id: ID!
-    eventId: ID!
-    attendeeId: ID!
+    id: ID
+    eventId: ID
+    attendeeId: ID
     paymentMethod: String
-    ticketInfo: [PurchasedTicketInfo]!
+    ticketInfo: [PurchasedTicketInfo]
     totalPrice: Float
     amountPaid: Float
     status: String
     paymentId: String
-    createdAt: String!
-    scanned: Boolean!
+    createdAt: String
+    scanned: Boolean
 }
 
-
+type UserIncludedTicket {
+    id: ID
+    eventId: ID
+    attendeeId: ID
+    paymentMethod: String
+    ticketInfo: [PurchasedTicketInfo]
+    user: User
+    totalPrice: Float
+    amountPaid: Float
+    status: String
+    paymentId: String
+    createdAt: String
+    scanned: Boolean
+}
 input TicketInput {
     eventId: ID!
     attendeeId: ID!
