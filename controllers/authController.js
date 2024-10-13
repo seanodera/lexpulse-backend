@@ -27,7 +27,7 @@ exports.checkUser = async (req, res, next) => {
         if (!isMatch) return res.status(400).json({msg: 'Invalid credentials'});
         await updateBalance(user.id)
         jwt.sign(
-            {id: user.id},
+            {...user,id: user.id},
             process.env.JWT_SECRET,
             {expiresIn: '365d'},
             (err, token) => {

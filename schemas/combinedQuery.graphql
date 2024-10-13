@@ -1,0 +1,28 @@
+type Query {
+    user(id: ID!): User
+    users: [User]
+    venue(id: ID!): Venue
+    venues: [Venue]
+    wallet(id: ID!): Wallet
+    wallets: [Wallet]
+    ticket(id: ID!): Ticket
+    tickets: [Ticket]
+    transaction(id: ID!): Transaction
+    transactions: [Transaction]
+    scanner(id: ID!): Scanner
+    scanners: [Scanner]
+
+
+    #events
+    getEvent(id: ID!): Event
+    getHostEvents(id: ID!): [Event]
+    getUnapprovedEvents:[Event]
+    getTodayEvents:[Event]
+    upcomingEvents:[Event]
+    recentEvents:[Event]
+}
+
+schema {
+    query: Query
+    mutation: Mutation
+}

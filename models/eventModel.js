@@ -124,6 +124,7 @@ const EventSchema = new mongoose.Schema({
   approved: {
     type: Boolean,
     required: true,
+    default: false,
   },
   createdAt: {
     type: Date,
@@ -145,6 +146,14 @@ const EventSchema = new mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId],
     ref: 'Scanner',
     default: []
+  },
+  flagged: {
+    type: Boolean,
+    default: false,
+  },
+  reason: {
+    type: String,
+    default: '',
   }
 });
 

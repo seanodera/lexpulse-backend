@@ -1,0 +1,23 @@
+type Wallet {
+    id: ID!
+    userId: ID!
+    balance: Float!
+    prevBalance: Float!
+    pendingBalance: Float!
+    pendingPrevBalance: Float!
+    currency: String!
+}
+
+input WalletInput {
+    userId: ID!
+    balance: Float!
+    prevBalance: Float!
+    pendingBalance: Float!
+    pendingPrevBalance: Float!
+    currency: String
+}
+
+type BankAccount {
+    id: ID!
+    number: String!
+}

@@ -1,0 +1,29 @@
+#file:transactionModel.graphql
+
+type Transaction {
+    id: ID!
+    reference: String!
+    eventId: ID!
+    hostId: ID!
+    attendeeId: ID!
+    amount: Float!
+    currency: String!
+    method: String!
+    paymentReference: String!
+    status: String!
+    createdAt: String!
+    updatedAt: String!
+}
+
+input TransactionInput {
+    reference: String!
+    eventId: ID!
+    hostId: ID!
+    attendeeId: ID!
+    amount: Float!
+    currency: String
+    method: String!
+    paymentReference: String!
+    status: String!
+}
+

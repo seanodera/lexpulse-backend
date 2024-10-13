@@ -160,7 +160,7 @@ exports.addEvent = async (req, res, next) => {
       dress: req.body.dress, // New field
       venue: venue, // New venue details
       lastEntry: req.body.lastEntry,
-      approved: true,
+      approved: false,
     };
 
     const event = await Event.create(_event);
