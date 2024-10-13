@@ -98,7 +98,7 @@ async function getEventTransactions(_, { id }) {
    try {
        const transactions = await Transaction.find({eventId: id}).populate('attendeeId').exec();
 
-       console.log(transactions);
+
        return transactions.map(transaction => ({
            ...transaction.toJSON(),
            attendeeId: transaction.attendeeId._id,
@@ -113,7 +113,7 @@ async function getEventReservations(_, { id }) {
     try {
         const tickets = await Ticket.find({eventId: id}).populate('attendeeId').exec()
 
-        console.log(tickets)
+
         return tickets.map(ticket => ({
             ...ticket.toJSON(),
             attendeeId: ticket.attendeeId._id,

@@ -12,6 +12,8 @@ type Query {
     scanner(id: ID!): Scanner
     scanners: [Scanner]
 
+    #user
+    getHosts:[User]
 
     #events
     getEvent(id: ID!): Event

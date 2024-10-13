@@ -36,7 +36,7 @@ const combinedMutation = readGraphQLFile('./schemas/combinedMutations.graphql');
 // const countriesResolvers = require('./resolvers/countriesResolvers');
 const eventResolvers = require('./resolvers/eventResolver');
 // const followingResolvers = require('./resolvers/followingResolvers');
-// const userResolvers = require('./resolvers/userResolvers');
+const userResolvers = require('./resolvers/userResolver');
 // const ticketResolvers = require('./resolvers/ticketResolvers');
 // const scannerResolvers = require('./resolvers/scannerResolvers');
 // const promotionResolvers = require('./resolvers/promotionResolvers');
@@ -75,7 +75,7 @@ exports.resolvers = mergeResolvers([
     // countriesResolvers,
     eventResolvers,
     // followingResolvers,
-    // userResolvers,
+    userResolvers,
     // ticketResolvers,
     // scannerResolvers,
     // promotionResolvers,
