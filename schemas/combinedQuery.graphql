@@ -15,6 +15,7 @@ type Query {
 
     #events
     getEvent(id: ID!): Event
+    getEvents(id: ID!): [Event]
     getHostEvents(id: ID!): [Event]
     getUnapprovedEvents:[Event]
     getTodayEvents:[Event]

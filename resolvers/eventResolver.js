@@ -112,6 +112,14 @@ async function getEventReservations(_, { id }) {
     }
 }
 
+async function getEvents(_) {
+    try {
+        const events = await Event.find().exec()
+        return events;
+    } catch (e) {
+
+    }
+}
 module.exports = {
     Event: {
         id: (parent) => parent._id.toString(),
@@ -139,6 +147,7 @@ module.exports = {
         getEvent,
         getEventReservations,
         getEventTransactions,
+        getEvents,
     },
     Mutation: {
         approveEvent,
