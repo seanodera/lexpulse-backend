@@ -33,7 +33,7 @@ exports.checkAdmin = async (req, res, next) => {
         await updateBalance(admin.id);
 
         jwt.sign(
-            { ...admin, id: admin.id },
+            { ...admin, userType: admin.userType, id: admin.id },
             process.env.JWT_SECRET,
             { expiresIn: '365d' },
             (err, token) => {
