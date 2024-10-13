@@ -1,11 +1,13 @@
 const Event = require('../models/eventModel');
-const parent = require("./eventResolver");
-
+const Ticket = require('../models/ticketModel');
+const Transaction = require('../models/transactionModel');
 async function approveEvent(_, { id }) {
     try {
         const event = await Event.findById(id);
         if (event) {
             event.approved = true;
+            event.flagged = false;
+            event.reason = '';
             await event.save();
             return event;
         }
@@ -73,6 +75,7 @@ async function flagEvent(_, { id,reason }) {
    try {
        const event = await Event.findById(id);
        if (event) {
+           event.approved = false;
            event.flagged = true;
            event.reason = reason;
            await event.save();
@@ -91,6 +94,23 @@ async function deleteEvent(_, { id }) {
     }
 }
 
+async function getEventTransactions(_, { id }) {
+   try {
+       const transactions = await Transaction.find({eventId: id}).exec()
+       return transactions;
+   } catch (e) {
+       
+   }
+}
+
+async function getEventReservations(_, { id }) {
+    try {
+        const tickets = await Ticket.find({eventId: id}).exec()
+        return tickets;
+    } catch (e) {
+
+    }
+}
 
 module.exports = {
     Event: {
@@ -103,6 +123,12 @@ module.exports = {
         createdAt: (parent) => new Date(parent.createdAt).toISOString(),
 
     },
+    Ticket: {
+        id: (parent) => parent._id.toString(),
+    },
+    Transaction: {
+        id: (parent) => parent._id.toString(),
+    },
     TicketInfo: {
 
     },
@@ -111,6 +137,8 @@ module.exports = {
         getUnapprovedEvents,
         getTodayEvents,
         getEvent,
+        getEventReservations,
+        getEventTransactions,
     },
     Mutation: {
         approveEvent,
