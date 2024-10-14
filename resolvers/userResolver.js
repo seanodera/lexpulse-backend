@@ -1,12 +1,11 @@
 const User = require('../models/userModel');
-const {Error} = require("mongoose");
+const { Error } = require("mongoose");
 
-
-async function user(_,{id}){
+async function user(_, { id }) {
     try {
-        return await User.findById(id)
+        return await User.findById(id);
     } catch (e) {
-
+        // Handle error
     }
 }
 
@@ -14,15 +13,49 @@ async function users(_) {
     try {
         return await User.find().sort({ createdAt: -1 });
     } catch (e) {
-
+        // Handle error
     }
-
 }
-async function getHosts(_){
+
+async function getHosts(_) {
     try {
         return await User.find({ userType: 'host' }).exec();
     } catch (e) {
         throw new Error('Failed to fetch hosts');
+    }
+}
+
+async function createUser(_, { input }) {
+    try {
+        const user = new User(input);
+        await user.save();
+        return user;
+    } catch (error) {
+        throw new Error("Error creating user: " + error.message);
+    }
+}
+
+async function updateUser(_, { id, input }) {
+    try {
+        const user = await User.findByIdAndUpdate(id, input, { new: true });
+        if (!user) {
+            throw new Error("User not found");
+        }
+        return user;
+    } catch (error) {
+        throw new Error("Error updating user: " + error.message);
+    }
+}
+
+async function deleteUser(_, { id }) {
+    try {
+        const user = await User.findByIdAndDelete(id);
+        if (!user) {
+            throw new Error("User not found");
+        }
+        return user;
+    } catch (error) {
+        throw new Error("Error deleting user: " + error.message);
     }
 }
 
@@ -35,5 +68,10 @@ module.exports = {
         user,
         users,
         getHosts,
+    },
+    Mutation: {
+        createUser,
+        updateUser,
+        deleteUser
     }
-}
+};

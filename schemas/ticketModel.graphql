@@ -23,6 +23,20 @@ type Ticket {
     scanned: Boolean
 }
 
+type CombinedTicket {
+    id: ID
+    eventId: ID
+    attendeeId: ID
+    paymentMethod: String
+    ticketInfo: [PurchasedTicketInfo]
+    totalPrice: Float
+    amountPaid: Float
+    status: String
+    paymentId: String
+    createdAt: String
+    scanned: Boolean
+}
+
 type UserIncludedTicket {
     id: ID
     eventId: ID

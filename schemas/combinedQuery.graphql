@@ -14,11 +14,13 @@ type Query {
 
     #user
     getHosts:[User]
+    getUserTickets(id: ID!): [Ticket]
+    getHostEvents(id: ID!): [Event]
+    getUserWallets(id: ID!): [Wallet]
 
     #events
     getEvent(id: ID!): Event
     getEvents: [Event]
-    getHostEvents(id: ID!): [Event]
     getUnapprovedEvents:[Event]
     getTodayEvents:[Event]
     upcomingEvents:[Event]

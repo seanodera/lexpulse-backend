@@ -94,35 +94,9 @@ async function deleteEvent(_, { id }) {
     }
 }
 
-async function getEventTransactions(_, { id }) {
-   try {
-       const transactions = await Transaction.find({eventId: id}).populate('attendeeId').exec();
 
 
-       return transactions.map(transaction => ({
-           ...transaction.toJSON(),
-           attendeeId: transaction.attendeeId._id,
-           user: transaction.attendeeId
-       }));
-   } catch (e) {
-       
-   }
-}
 
-async function getEventReservations(_, { id }) {
-    try {
-        const tickets = await Ticket.find({eventId: id}).populate('attendeeId').exec()
-
-
-        return tickets.map(ticket => ({
-            ...ticket.toJSON(),
-            attendeeId: ticket.attendeeId._id,
-            user: ticket.attendeeId
-        }));
-    } catch (e) {
-
-    }
-}
 
 async function getEvents(_) {
     try {
@@ -167,8 +141,6 @@ module.exports = {
         getUnapprovedEvents,
         getTodayEvents,
         getEvent,
-        getEventReservations,
-        getEventTransactions,
         getEvents,
     },
     Mutation: {

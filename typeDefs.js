@@ -28,19 +28,19 @@ const combinedMutation = readGraphQLFile('./schemas/combinedMutations.graphql');
 
 
 // resolver imports here
-// const walletResolvers = require('./resolvers/walletResolvers');
+const walletResolvers = require('./resolvers/walletResolver');
 // const notificationsResolvers = require('./resolvers/notificationsResolvers');
 // const favoritesResolvers = require('./resolvers/favoritesResolvers');
 // const categoriesResolvers = require('./resolvers/categoriesResolvers');
-// const transactionResolvers = require('./resolvers/transactionResolvers');
+const transactionResolvers = require('./resolvers/transactionResolver');
 // const countriesResolvers = require('./resolvers/countriesResolvers');
 const eventResolvers = require('./resolvers/eventResolver');
 // const followingResolvers = require('./resolvers/followingResolvers');
 const userResolvers = require('./resolvers/userResolver');
-// const ticketResolvers = require('./resolvers/ticketResolvers');
-// const scannerResolvers = require('./resolvers/scannerResolvers');
-// const promotionResolvers = require('./resolvers/promotionResolvers');
-// const venueResolvers = require('./resolvers/venueResolvers');
+const ticketResolvers = require('./resolvers/ticketResolver');
+const scannerResolvers = require('./resolvers/scannerResolver');
+// const promotionResolvers = require('./resolvers/promotionResolver');
+const venueResolvers = require('./resolvers/venueResolver');
 // const referralCodeResolvers = require('./resolvers/referralCodeResolvers');
 // const otpResolvers = require('./resolvers/otpResolvers');
 // const pointsResolvers = require('./resolvers/pointsResolvers');
@@ -67,19 +67,19 @@ exports.typeDefs = mergeTypeDefs([
 ]);
 
 exports.resolvers = mergeResolvers([
-    // walletResolvers,
+    walletResolvers,
     // notificationsResolvers,
     // favoritesResolvers,
     // categoriesResolvers,
-    // transactionResolvers,
+    transactionResolvers,
     // countriesResolvers,
     eventResolvers,
     // followingResolvers,
     userResolvers,
-    // ticketResolvers,
-    // scannerResolvers,
+    ticketResolvers,
+    scannerResolvers,
     // promotionResolvers,
-    // venueResolvers,
+    venueResolvers,
     // referralCodeResolvers,
     // otpResolvers,
     // pointsResolvers
