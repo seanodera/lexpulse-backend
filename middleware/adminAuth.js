@@ -18,7 +18,7 @@ function adminAuth(req, res, next) {
         const decoded = jwt.verify(bearerToken, process.env.JWT_SECRET);
         // Find the scanner from payload
         const admin = decoded;
-        if ( !admin || admin.userType !== 'administrator') {
+        if ( !admin || admin.role !== 'admin') {
             return res.status(403).json({msg: 'Invalid token, authorization denied'});
         }
 

@@ -1,13 +1,17 @@
-
-
-
-const User = require('../models/userModel');
+const Admin = require('../models/adminModel');
 const Otp = require('../models/otpModel');
 const moment = require('moment');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const postmark = require("postmark");
 const { updateBalance } = require("../utils/helper");
+const process = require("node:process");
+const console = require("node:console");
+const Scanner = require("../models/scannerModel");
+const Event = require("../models/eventModel");
+const {scannerInvite} = require("../templates/scannerInvite");
+const {adminInvite} = require("../templates/adminInvite");
+const {name, role} = require("node-openssl-cert/name_mappings");
 const client = new postmark.ServerClient(process.env.POSTMARK_EMAIL_KEY);
 
 // @desc Auth admin
@@ -20,20 +24,18 @@ exports.checkAdmin = async (req, res, next) => {
             return res.status(400).json({ msg: 'Please enter all fields' });
         }
 
-        const admin = await User.findOne({ username }).exec();
+        const admin = await Admin.findOne({ username }).exec();
 
         if (!admin) return res.status(400).json({ msg: 'Admin does not exist' });
-
-
         if (admin.activatedEmail === false) return res.status(400).json({ msg: 'Email not verified' });
 
         const isMatch = await bcrypt.compare(password, admin.password);
 
-        if (!isMatch || admin.userType !== 'administrator') return res.status(400).json({ msg: 'Invalid credentials' });
+        if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
         console.log(admin);
 
         jwt.sign(
-            { ...admin, userType: admin.userType, id: admin.id },
+            { ...admin, role: admin.role, id: admin.id },
             process.env.JWT_SECRET,
             { expiresIn: '365d' },
             (err, token) => {
@@ -42,19 +44,8 @@ exports.checkAdmin = async (req, res, next) => {
                 return res.json({
                     token,
                     user: {
+                        ...admin.toJSON(),
                         id: admin.id,
-                        firstName: admin.firstName,
-                        lastName: admin.lastName,
-                        username: admin.username,
-                        country: admin.country,
-                        gender: admin.gender,
-                        userType: admin.userType,
-                        image: admin.image,
-                        phone: admin.phone,
-                        activatedEmail: admin.activatedEmail,
-                        activatedPhone: admin.activatedPhone,
-                        accountActive: admin.accountActive,
-                        createdAt: admin.createdAt,
                     }
                 });
             }
@@ -88,7 +79,7 @@ exports.checkAdminVerification = async (req, res, next) => {
             return res.status(400).json({ msg: 'Please enter all fields' });
         }
 
-        User.findOne({ username })
+        Admin.findOne({ username })
             .then(async (user) => {
                 if (!user) return res.status(400).json({ msg: 'Admin does not exist' });
 
@@ -98,7 +89,7 @@ exports.checkAdminVerification = async (req, res, next) => {
 
                 if (otpCode.activateCode !== Number(code)) return res.status(400).json({ msg: 'Invalid code' });
 
-                const userNew = await User.findByIdAndUpdate(user._id, {
+                const userNew = await Admin.findByIdAndUpdate(user._id, {
                     activatedEmail: true
                 }, { new: true });
 
@@ -148,3 +139,120 @@ exports.checkAdminVerification = async (req, res, next) => {
         }
     }
 }
+
+// @desc Auth admin confirm email
+// @route POST /api/v1/admin/create
+exports.createAdmin = async (req, res, next) => {
+    try {
+        const {name, email, role} = req.body;
+
+        const newAdmin = new Admin({
+            name,
+            email,
+            role,
+            activated: false,
+        });
+        const savedAdmin = await newAdmin.save();
+        return res.status(201).json(savedAdmin);
+    } catch (e) {
+
+    }
+}
+
+// @desc Activate admin account
+// @route POST /api/v1/admins/invite/:id
+exports.sendAdminInvite = async (req, res, next) => {
+
+    try {
+        const {  id } = req.params;
+        const admin = await Admin.findById(id).exec();
+        const actionCode = jwt.sign({admin}, process.env.JWT_SECRET,{expiresIn: '24h'});
+        const message = adminInvite(admin,`https://lexpulse-admin.vercel.app/register?oob=${actionCode}`)
+        const emailSend = await client.sendEmail(
+            {
+                "From": "thelexpulseteam@fadorteclimited.com",
+                "To": admin.email,
+                "Subject": "Admin Invite",
+                "HtmlBody": message,
+                "MessageStream": "outbound"
+            }
+        )
+        res.status(200).json({
+            success: true,
+            message: 'Invitation sent successfully'
+        });
+    } catch (e) {
+
+    }
+}
+
+
+// @desc Activate admin account
+// @route GET /api/v1/admins/invite/:id
+exports.processAdminInvite = async (req, res, next) => {
+    try {
+        const admin = jwt.verify(req.params.id, process.env.JWT_SECRET);
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                error: 'Admin not found'
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            data: admin
+        });
+    } catch (error) {
+        return res.status(400).json({
+            success: false,
+            error: 'Invalid token or token expired'
+        });
+    }
+};
+
+// @desc Activate admin account
+// @route POST /api/v1/admins/activate
+exports.activateAdmin = async (req, res, next) => {
+    try {
+        const {username, email, password} = req.body;
+
+        if (!username || !email || !password) {
+            return res.status(400).json({msg: 'Please enter all required fields.'});
+        }
+
+        const admin = await Admin.findOne({email});
+
+        if (!admin) {
+            return res.status(404).json({
+                success: false,
+                error: 'Admin not found'
+            });
+        }
+
+        if (admin.password) {
+            return res.status(400).json({
+                success: false,
+                error: 'Account is already activated'
+            });
+        }
+        const salt = await bcrypt.genSalt(10);
+
+        const hash = await bcrypt.hash(password, salt);
+        admin.username = username;
+        admin.password = hash;
+        admin.activated = true;
+        await admin.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Account activated',
+            data: admin,
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'Internal Server Error'
+        });
+    }
+};
