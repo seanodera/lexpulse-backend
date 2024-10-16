@@ -5,6 +5,8 @@ const process = require("node:process");
 const { v4: uuidv4 } = require('uuid');
 const countryData = require('country-data');
 
+
+
 exports.calculateWeightedRating = async (eventId) => {
     const event = await Event.findById(eventId);
     if (event) {
@@ -124,5 +126,28 @@ exports.updateBalance = async (userId) => {
             user.pendingBalance = 0;
         }
         await user.save()
+    }
+}
+
+exports.createPaystackRecipient = async (userId,type, name,account_number,bank_code,currency) => {
+
+    try {
+        const response = await axios.post('https://api.paystack.co/transferrecipient', {
+            type: type,
+            name: name,
+            account_number: account_number,
+            bank_code: bank_code,
+            currency: currency,
+            metadata: {
+                userId: userId
+            }
+        }, {
+            headers: {
+                Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+            }
+        });
+        return response.data;
+    } catch (error)  {
+        throw new Error('User not found');
     }
 }

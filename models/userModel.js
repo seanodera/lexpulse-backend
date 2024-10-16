@@ -91,6 +91,13 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  withdrawalAccounts: {
+    type: [
+      {
+        type: Schema.Types.ObjectId,
+      }
+    ],
+  }
 });
 
 module.exports = mongoose.model('User', UserSchema);

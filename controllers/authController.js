@@ -35,6 +35,7 @@ exports.checkUser = async (req, res, next) => {
                 const extra = (user.userType === 'host') ? {
                     pendingBalance: user.pendingBalance || 0,
                     availableBalance: user.availableBalance || 0,
+                    withdrawalAccounts: user.withdrawalAccounts || []
                 } : {}
                 res.json({
                     token,

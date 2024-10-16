@@ -17,7 +17,22 @@ input WalletInput {
     currency: String
 }
 
-type BankAccount {
-    id: ID!
-    number: String!
+enum PaymentServices {
+    Pawapay, Paystack
 }
+
+
+type WithdrawalAccount {
+    id: ID!
+    userId: ID!
+    type: String!
+    name: String!
+    accountNumber: String!
+    bank_code: String
+    currency: String
+    bank_name: String
+    recipient_code: String
+    service: PaymentServices
+    createdAt: String
+}
+

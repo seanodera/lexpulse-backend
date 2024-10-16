@@ -26,6 +26,7 @@ const venues = require('./routes/venueRoute');
 const transactions = require('./routes/transactionRoute');
 const utils = require('./routes/utilsRoute');
 const scanner = require('./routes/scannerRoute');
+const payouts = require('./routes/payoutsRoute');
 const admin = require('./routes/adminRoute');
 const adminAuth = require('./middleware/adminAuth');
 const {typeDefs, resolvers} = require("./typeDefs");
@@ -61,6 +62,7 @@ const startServer = async () => {
     app.use('/api/v1/transactions', transactions);
     app.use('/api/v1/utils', utils);
     app.use('/api/v1/scanners', scanner);
+    app.use('/api/v1/payouts', payouts);
     app.use('/api/v1/admin', admin);
     app.use('/graphql',adminAuth, expressMiddleware(server),errorLogger);
 
