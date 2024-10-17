@@ -1,6 +1,6 @@
 const Payout = require('../models/payoutModel');
 const WithdrawalAccount = require('../models/withdrawalAccountModel');
-const {createPaystackRecipient} = require("../utils/helper");
+const {createPaystackRecipient, getISO3CountryName} = require("../utils/helper");
 const axios = require("axios");
 const process = require("node:process");
 
@@ -57,12 +57,20 @@ exports.getPaystackBanks = async (req, res) => {
 // @desc get paystack banks
 // @route POST /api/v1/payouts/configs
 exports.getPawapayConfigs = async (req, res) => {
+
+
     const response = await axios.get('https://api.sandbox.pawapay.cloud/active-conf',{ headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${process.env.PAWAPAY_SECRET_KEY}`
         }});
+
+    const data = response.data.countries.filter((country ) => {
+
+        return country?.correspondents?.some(correspondent => correspondent.currency === req.query.currency);
+    })
+
     return res.status(200).json({
-        data: response.data.countries,
+        data: data,
         success: true,
     })
 }

@@ -30,6 +30,7 @@ function getISO3CountryName(countryName) {
         return `Country with name ${countryName} not found.`;
     }
 }
+exports.getISO3CountryName = getISO3CountryName;
 
 const convertCurrency = async (amount, currency) => {
     try {
