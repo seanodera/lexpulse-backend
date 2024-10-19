@@ -14,7 +14,8 @@ const router = express.Router();
 router.route('/banks').get(getPaystackBanks);
 router.route('/configs').get(getPawapayConfigs);
 
-router.route('/account/:id').post(addWithdrawalAccount).get(getWithdrawalAccount).delete(deleteWithdrawalAccount);
+router.route('/account/:id').get(getWithdrawalAccount).delete(deleteWithdrawalAccount);
+router.route('/account/create').post(addWithdrawalAccount)
 
 
 

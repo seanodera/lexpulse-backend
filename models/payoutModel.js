@@ -12,11 +12,18 @@ const PayoutSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'approved', 'rejected'],
+        enum: ['pending', 'approved', 'rejected','completed','failed'],
         default: 'pending'
     },
     reason: {
         type: String,
+    },
+    transactionId: {
+        type: String,
+    },
+    service: {
+        type: String,
+        enum: [' Pawapay', 'Paystack'],
     },
     walletId: {
         type: mongoose.Schema.Types.ObjectId,

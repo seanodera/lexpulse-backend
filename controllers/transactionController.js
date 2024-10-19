@@ -380,7 +380,7 @@ exports.getUserWallets = async (req, res, next) => {
         const hostId = Types.ObjectId(req.params.id);
         const wallets = await Wallet.find({userId:hostId }).exec()
         res.status(200).json({success: true, data: wallets});
-    } catch (e) {
+    } catch (error) {
         console.log(error);
         res.status(500).json({error: error.message});
     }

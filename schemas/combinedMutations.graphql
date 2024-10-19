@@ -26,6 +26,15 @@ type Mutation {
     updateEvent(id: ID!,input: EventInput):Event
     approveEvent(id: ID!): Event
     flagEvent (id: ID!, reason: String): Event
+    
+    #payout
+    completePayout(id:ID!):Payout
+    createWithdrawalAccount(input: WithdrawalAccountInput):WithdrawalAccount
 
+    createPayout(input: PayoutInput): Payout
+    updatePayout(id: ID!, input: PayoutInput): Payout
+    deletePayout(id: ID!): Payout
 
+    updateWithdrawalAccount(id: ID!, input: WithdrawalAccountInput): WithdrawalAccount
+    deleteWithdrawalAccount(id: ID!): WithdrawalAccount
 }

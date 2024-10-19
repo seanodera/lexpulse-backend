@@ -63,6 +63,7 @@ async function getUserWallets(_, { id }) {
         throw new Error("Error fetching wallets: " + error.message);
     }
 }
+
 module.exports = {
     Mutation: {
         createWallet,

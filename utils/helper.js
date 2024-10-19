@@ -1,9 +1,13 @@
 const Event = require('../models/eventModel');
 const User = require('../models/userModel');
+const Payout = require('../models/payoutModel');
+const Wallet = require('../models/walletModel');
+const WithdrawalAccount = require('../models/withdrawalAccountModel');
 const axios = require("axios");
 const process = require("node:process");
 const { v4: uuidv4 } = require('uuid');
 const countryData = require('country-data');
+
 
 
 
@@ -147,8 +151,56 @@ exports.createPaystackRecipient = async (userId,type, name,account_number,bank_c
                 Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
             }
         });
+        console.log(response.data)
         return response.data;
     } catch (error)  {
-        throw new Error('User not found');
+        console.log(error);
+        throw new Error('User not created: ' + error.message);
+    }
+}
+
+exports.completePawaPayPayout = async (amount,payout,account) => {
+    try {
+        const generatedUUID = uuidv4();
+        const response = await axios.post('https://api.sandbox.pawapay.io/payouts', {
+            payoutId: generatedUUID,
+            amount: amount,
+            currency: account.currency,
+            correspondent: account.bankCode,
+            recipient: {
+                type: '',
+                address: {value: account.accountNumber}
+            },
+            "customerTimestamp": new Date(payout.createdAt).toISOString(),
+            "statementDescription": `Lexpulse Payout #${payout._id}`,
+        }, {headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${process.env.PAWAPAY_SECRET_KEY}`
+            }})
+
+        return {
+            transactionId: response.data.payoutId,
+            status: response.data.status,
+        }
+
+    } catch (e) {
+        throw new Error('failed to complete payout')
+    }
+}
+
+exports.completePaystackPayout = async (amount,payout,account) => {
+    try {
+        const response = await axios.post('https://api.paystack.co/transfer',{
+            source: 'balance',
+            reason: `Lexpulse Payout #${payout._id}`,
+            amount: amount * 100,
+            recipient: account.recipient_code,
+        })
+        return {
+            status: response.data.data.status,
+            transactionId: response.data.data.transfer_code,
+        }
+    } catch (e) {
+        throw new Error('failed to complete payout')
     }
 }

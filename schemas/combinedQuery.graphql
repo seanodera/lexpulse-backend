@@ -11,6 +11,9 @@ type Query {
     transactions: [Transaction]
     scanner(id: ID!): Scanner
     scanners: [Scanner]
+    payout(id:ID!): Payout
+    payouts:[Payout]
+    withdrawalAccount(id:ID!):WithdrawalAccount
 
     #user
     getHosts:[User]
@@ -27,6 +30,9 @@ type Query {
     recentEvents:[Event]
     getEventTransactions(id: ID!): [UserIncludedTransaction]
     getEventReservations(id: ID!): [UserIncludedTicket]
+
+    #payouts
+    getUserPayouts(userId: ID): [Payout]
 
 }
 

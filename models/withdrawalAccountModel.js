@@ -17,9 +17,9 @@ const WithdrawalAccountSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    bank_code: String,
+    bankCode: String,
     currency: String,
-    bank_name: String,
+    bankName: String,
     recipient_code: String,
     service: {
         type: String,

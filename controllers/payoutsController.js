@@ -9,32 +9,39 @@ const process = require("node:process");
 exports.addWithdrawalAccount = async (req, res) => {
 
     try {
-        const {userId, type, name,accountNumber,bankCode,currency} =req.body;
+        const {userId, type, name, accountNumber, bankCode, currency, bankName} = req.body;
         let withdrawalAccount;
-        if (currency === 'GHS'){
-            const recipient = await createPaystackRecipient(userId, type, name, accountNumber,bankCode,currency);
-            const withdrawalAccount = await WithdrawalAccount.create({
-                userId: userId,
-                type: type,
-                name: name,
-                accountNumber: accountNumber,
-                bankCode: bankCode,
-                currency: currency,
-                recipient_code: recipient.recipient_code,
-                service: 'Paystack'
-            });
+        if (currency === 'GHS') {
+            const recipient = await createPaystackRecipient(userId, type, name, accountNumber, bankCode, currency);
+            if (recipient) {
+                console.log(recipient)
+                withdrawalAccount = await WithdrawalAccount.create({
+                    userId: userId,
+                    type: recipient.type,
+                    name: name,
+                    accountNumber: accountNumber,
+                    bankCode: bankCode,
+                    bankName: bankName,
+                    currency: currency,
+                    recipient_code: recipient.recipient_code,
+                    service: 'Paystack'
+                });
+            }
         } else {
-            const withdrawalAccount = await WithdrawalAccount.create({
+            withdrawalAccount = await WithdrawalAccount.create({
                 userId: userId,
-                type: type,
+                type: 'MSISDN',
                 name: name,
                 accountNumber: accountNumber,
                 currency: currency,
+                bankCode: bankCode,
+
                 service: 'Pawapay'
             });
         }
+        res.status(200).json({data: withdrawalAccount,success: true});
     } catch (error) {
-
+        console.log(error)
     }
 }
 
@@ -42,7 +49,7 @@ exports.addWithdrawalAccount = async (req, res) => {
 // @route GET /api/v1/payouts/banks
 exports.getPaystackBanks = async (req, res) => {
 
-    const response = await axios.get(`https://api.paystack.co/bank`,{
+    const response = await axios.get(`https://api.paystack.co/bank`, {
         params: {currency: req.query.currency},
         headers: {
             Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
@@ -50,7 +57,7 @@ exports.getPaystackBanks = async (req, res) => {
     });
     return res.status(200).json({
         success: true,
-        data:response.data.data,
+        data: response.data.data,
     });
 }
 
@@ -59,12 +66,14 @@ exports.getPaystackBanks = async (req, res) => {
 exports.getPawapayConfigs = async (req, res) => {
 
 
-    const response = await axios.get('https://api.sandbox.pawapay.cloud/active-conf',{ headers: {
+    const response = await axios.get('https://api.sandbox.pawapay.cloud/active-conf', {
+        headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${process.env.PAWAPAY_SECRET_KEY}`
-        }});
+        }
+    });
 
-    const data = response.data.countries.filter((country ) => {
+    const data = response.data.countries.filter((country) => {
 
         return country?.correspondents?.some(correspondent => correspondent.currency === req.query.currency);
     })
