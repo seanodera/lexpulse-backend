@@ -5,7 +5,7 @@ const {
     getWithdrawalAccount,
     deleteWithdrawalAccount,
     requestPayout,
-    getPayouts, getPawapayConfigs
+    getPayouts, getPawapayConfigs, getUserWithdrawalAccounts
 } = require("../controllers/payoutsController");
 const router = express.Router();
 
@@ -16,7 +16,7 @@ router.route('/configs').get(getPawapayConfigs);
 
 router.route('/account/:id').get(getWithdrawalAccount).delete(deleteWithdrawalAccount);
 router.route('/account/create').post(addWithdrawalAccount)
-
+router.route('/accounts/:id').get(getUserWithdrawalAccounts)
 
 
 router.route('/create').post(requestPayout);

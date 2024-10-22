@@ -3,6 +3,7 @@ const WithdrawalAccount = require('../models/withdrawalAccountModel');
 const {createPaystackRecipient, getISO3CountryName} = require("../utils/helper");
 const axios = require("axios");
 const process = require("node:process");
+const User = require("../models/userModel");
 
 // @desc Create withdrawal account
 // @route POST /api/v1/payouts/account/create
@@ -10,38 +11,44 @@ exports.addWithdrawalAccount = async (req, res) => {
 
     try {
         const {userId, type, name, accountNumber, bankCode, currency, bankName} = req.body;
+        const user = await User.findById(userId).exec();
         let withdrawalAccount;
-        if (currency === 'GHS') {
-            const recipient = await createPaystackRecipient(userId, type, name, accountNumber, bankCode, currency);
-            if (recipient) {
-                console.log(recipient)
-                withdrawalAccount = await WithdrawalAccount.create({
-                    userId: userId,
-                    type: recipient.type,
-                    name: name,
-                    accountNumber: accountNumber,
-                    bankCode: bankCode,
-                    bankName: bankName,
-                    currency: currency,
-                    recipient_code: recipient.recipient_code,
-                    service: 'Paystack'
-                });
-            }
-        } else {
-            withdrawalAccount = await WithdrawalAccount.create({
-                userId: userId,
-                type: 'MSISDN',
-                name: name,
-                accountNumber: accountNumber,
-                currency: currency,
-                bankCode: bankCode,
+       if (user){
+           if (currency === 'GHS') {
+               const recipient = await createPaystackRecipient(userId, type, name, accountNumber, bankCode, currency);
+               if (recipient) {
+                   console.log(recipient)
+                   withdrawalAccount = await WithdrawalAccount.create({
+                       userId: userId,
+                       type: recipient.type,
+                       name: name,
+                       accountNumber: accountNumber,
+                       bankCode: bankCode,
+                       bankName: bankName,
+                       currency: currency,
+                       recipient_code: recipient.recipient_code,
+                       service: 'Paystack'
+                   });
+               }
+           } else {
+               withdrawalAccount = await WithdrawalAccount.create({
+                   userId: userId,
+                   type: 'MSISDN',
+                   name: name,
+                   accountNumber: accountNumber,
+                   currency: currency,
+                   bankCode: bankCode,
 
-                service: 'Pawapay'
-            });
-        }
-        res.status(200).json({data: withdrawalAccount,success: true});
-    } catch (error) {
-        console.log(error)
+                   service: 'Pawapay'
+               });
+           }
+           user.withdrawalAccounts = [...user.withdrawalAccounts, withdrawalAccount];
+           user.save();
+           return res.status(200).json({data: withdrawalAccount,success: true});
+       }
+
+     } catch (error) {
+        return res.status(500).json({error: error.message});
     }
 }
 
@@ -100,13 +107,27 @@ exports.getWithdrawalAccount = async (req, res) => {
     }
 }
 
+// @desc get user withdrawal account
+// @route GET /api/v1/payouts/accounts/:id
+exports.getUserWithdrawalAccounts = async (req, res) => {
+    try {
+        const accounts = await WithdrawalAccount.find({userId: req.params.id}).exec();
+        return res.status(200).json({
+            data: accounts,
+            success: true,
+        })
+    } catch (error){
+        return res.status(500).json({error: error.message});
+    }
+}
+
 // @desc delete withdrawal account
 // @route DELETE /api/v1/payouts/account/:id
 exports.deleteWithdrawalAccount = async (req, res) => {
     try {
 
     } catch (error) {
-
+        return res.status(500).json({error: error.message});
     }
 }
 
@@ -121,7 +142,7 @@ exports.requestPayout = async (req, res) => {
             success: true,
         })
     } catch (error) {
-
+        return res.status(500).json({error: error.message});
     }
 }
 
@@ -135,6 +156,6 @@ exports.getPayouts = async (req, res) => {
             data: payouts,
         })
     } catch (error) {
-
+        return res.status(500).json({error: error.message});
     }
 }

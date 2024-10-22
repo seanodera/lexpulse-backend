@@ -151,8 +151,8 @@ exports.createPaystackRecipient = async (userId,type, name,account_number,bank_c
                 Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
             }
         });
-        console.log(response.data)
-        return response.data;
+
+        return response.data.data;
     } catch (error)  {
         console.log(error);
         throw new Error('User not created: ' + error.message);
