@@ -1,7 +1,7 @@
 const Venue = require('../models/venueModel');
 const Event = require("../models/eventModel");
 const cloudinary = require("../middleware/cloudinary");
-const VenueTableModel = require("..//models/venueTableModel");
+const VenueTableModel = require("../models/venueTableModel");
 const RecurringEventModel = require("../models/recurringEventModel");
 
 // Add a new venue
