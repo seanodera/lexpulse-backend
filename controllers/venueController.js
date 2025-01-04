@@ -103,6 +103,7 @@ exports.getUserVenue = async (req, res) => {
         const venues = await Venue.find({ userId }).populate('tables').populate('recurringEvents');
         res.status(200).json({ success: true, data: venues });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Failed to get user venues' });
     }
 }

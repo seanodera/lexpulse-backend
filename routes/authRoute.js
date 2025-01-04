@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { checkUser, checkUserVerification, userResetPassword, userChangePassword } = require('../controllers/authController');
+const { checkUser, checkUserVerification, userResetPassword, userChangePassword, autoLogin} = require('../controllers/authController');
 
 router
   .route('/')
@@ -17,5 +17,6 @@ router
   router
     .route('/change-password')
     .post(userChangePassword);
-
+  router.route('/autoLogin')
+      .get(autoLogin)
 module.exports = router;

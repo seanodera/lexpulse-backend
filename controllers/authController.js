@@ -375,3 +375,54 @@ exports.userChangePassword = async (req, res, next) => {
         }
     }
 }
+
+exports.autoLogin = async (req, res, next) => {
+    try {
+        const authHeader = req.header('Authorization');
+
+        if (!authHeader) {
+            console.log('No token, authorization denied');
+            return res.status(401).json({ msg: 'No token, authorization denied' });
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded;
+            const user = await User.findById(decoded.id).exec();
+
+            if (!user) {
+                return res.status(404).json({ msg: 'User not found' });
+            }
+
+
+            const newToken = jwt.sign(
+                { ...user, id: user._id },
+                process.env.JWT_SECRET,
+                { expiresIn: '365d' }
+            );
+            const extra = (user.userType === 'host') ? {
+                pendingBalance: user.pendingBalance || 0,
+                availableBalance: user.availableBalance || 0,
+                withdrawalAccounts: user.withdrawalAccounts || []
+            } : {}
+            res.status(200).json({
+                success: true,
+                token: newToken,
+                user: {
+                    id: user._id,
+                    ...user,
+                    ...extra,
+                },
+            });
+        } catch (err) {
+            return res.status(401).json({ msg: 'Token is not valid' });
+        }
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            error: 'Internal Server Error'
+        });
+    }
+}

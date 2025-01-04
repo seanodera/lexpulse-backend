@@ -75,7 +75,7 @@ const VenueSchema = new mongoose.Schema({
     tables: [
         {
             type: mongoose.Schema.Types.ObjectId,
-            ref: 'venueTable',
+            ref: 'VenueTable',
         }
     ],
     recurringEvents: [
