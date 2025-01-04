@@ -71,7 +71,19 @@ const VenueSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-    }
+    },
+    tables: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'venueTable',
+        }
+    ],
+    recurringEvents: [
+        {
+           type: mongoose.Schema.Types.ObjectId,
+            ref: 'recurringEvent',
+        }
+    ],
 });
 
 module.exports = mongoose.model('Venue', VenueSchema);

@@ -59,8 +59,10 @@ type Payout {
     currency: String
     status: PayoutStatus
     reason: String
-    walletId: String
     wallet: Wallet
+    transactionId: String
+    service: PaymentServices
+    walletId: String
     withdrawalAccountId: String
     withdrawalAccount: WithdrawalAccount
     userId: String

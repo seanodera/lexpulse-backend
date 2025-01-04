@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const {
-    addVenue, searchVenues, updateVenue, getVenue, deleteVenue, getUserVenue, getVenueEvents
+    addVenue, searchVenues, updateVenue, getVenue, deleteVenue, getUserVenue, getVenueEvents, createRecurringEvent,
+    createVenueTable
 } = require('../controllers/venueController');
 const auth = require('../middleware/authMiddleware');
 const upload = require('../middleware/multer');
@@ -25,5 +26,15 @@ router
     .get(getVenue)
     .put(auth, updateVenue)
     .delete(auth, deleteVenue);
+
+// POST route to add a table to a venue
+router
+    .route('/:venueId/table')
+    .post(auth, createVenueTable);
+
+// POST route to add a recurringEvent to a venue
+router
+    .route('/:venueId/recurring')
+    .post(auth, createRecurringEvent);
 
 module.exports = router;

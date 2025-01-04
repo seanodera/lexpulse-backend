@@ -20,6 +20,7 @@ type Query {
     getUserTickets(id: ID!): [Ticket]
     getHostEvents(id: ID!): [Event]
     getUserWallets(id: ID!): [Wallet]
+    getUserWithdrawalAccounts(id: ID!): [WithdrawalAccount],
 
     #events
     getEvent(id: ID!): Event

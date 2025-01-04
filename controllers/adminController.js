@@ -179,7 +179,8 @@ exports.sendAdminInvite = async (req, res, next) => {
         )
         res.status(200).json({
             success: true,
-            message: 'Invitation sent successfully'
+            message: 'Invitation sent successfully',
+            url: `https://lexpulse-admin.vercel.app/register?oob=${actionCode}`
         });
     } catch (e) {
 

@@ -1,7 +1,8 @@
 const Venue = require('../models/venueModel');
 const Event = require("../models/eventModel");
 const cloudinary = require("../middleware/cloudinary");
-
+const VenueTableModel = require("..//models/venueTableModel");
+const RecurringEventModel = require("../models/recurringEventModel");
 
 // Add a new venue
 exports.addVenue = async (req, res) => {
@@ -86,7 +87,7 @@ exports.updateVenue = async (req, res) => {
 exports.getVenue = async (req, res) => {
     const { id } = req.params;
     try {
-        const venue = await Venue.findById(id);
+        const venue = await Venue.findById(id).populate('tables').populate('recurringEvents');
         if (!venue) {
             return res.status(404).json({ error: 'Venue not found' });
         }
@@ -99,13 +100,12 @@ exports.getVenue = async (req, res) => {
 exports.getUserVenue = async (req, res) => {
     const userId = req.params.id;
     try {
-        const venues = await Venue.find({ userId: userId });
+        const venues = await Venue.find({ userId }).populate('tables').populate('recurringEvents');
         res.status(200).json({ success: true, data: venues });
     } catch (error) {
         res.status(500).json({ error: 'Failed to get user venues' });
     }
 }
-
 exports.getVenueEvents = async (req, res) => {
     const venueId = req.params.id;
     const today = new Date();
@@ -134,5 +134,63 @@ exports.deleteVenue = async (req, res) => {
         res.status(200).json({success: true, message: 'Venue deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: 'Failed to delete venue' });
+    }
+};
+
+
+
+
+exports.createVenueTable = async (req, res) => {
+    const { venueId } = req.params;
+    const {name, description, minimumSpend, available} = req.body;
+    try {
+        const venueTable = new VenueTableModel({
+            name,
+            venueId,
+            description,
+            minimumSpend,
+            available
+        });
+        await venueTable.save();
+
+        await Venue.findByIdAndUpdate(
+            venueId,
+            { $push: { tables: venueTable._id } },
+            { new: true, useFindAndModify: false }
+        );
+
+        res.status(200).send({ venueTable });
+    } catch (error) {
+        res.status(400).send({ error: error.message });
+    }
+};
+
+exports.createRecurringEvent = async (req, res) => {
+    const { venueId } = req.params;
+    const {id, startDate, endDate, name, description, dayOfWeek, tables, startTime, endTime} = req.body;
+    try {
+        const recurringEvent = new RecurringEventModel({
+            id,
+            venueId,
+            startDate,
+            endDate,
+            name,
+            description,
+            dayOfWeek,
+            tables,
+            startTime,
+            endTime
+        });
+        await recurringEvent.save();
+
+        await Venue.findByIdAndUpdate(
+            venueId,
+            { $push: { recurringEvents: recurringEvent._id } },
+            { new: true, useFindAndModify: false }
+        );
+
+        res.status(200).send({ recurringEvent });
+    } catch (error) {
+        res.status(400).send({ error: error.message });
     }
 };

@@ -22,6 +22,7 @@ type User {
     pendingBalance: Float
     prevAvailableBalance: Float
     prevPendingBalance: Float
+    withdrawalAccounts: [ID!]
 }
 
 input UserInput {
@@ -44,5 +45,6 @@ input UserInput {
     pendingBalance: Float
     prevAvailableBalance: Float
     prevPendingBalance: Float
+    withdrawalAccounts: [ID!]
 }
 
